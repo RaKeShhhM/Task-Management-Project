@@ -17,6 +17,15 @@ const taskSchema = new mongoose.Schema(
       enum: ["ToDo", "InProgress", "Done"], // Kanban columns
       default: "ToDo",
     },
+    priority: {
+      type: String,
+      enum: ["Low", "Medium", "High"],
+      default: "Medium",
+    },
+    dueDate: {
+      type: Date,
+      default: null,
+    },
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",

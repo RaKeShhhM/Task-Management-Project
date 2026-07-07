@@ -5,7 +5,8 @@ const Project = require("../models/Project");
 // @access  Private
 const createTask = async (req, res) => {
   try {
-    const { title, description, projectId, assignee } = req.body;
+    const { title, description, projectId, assignee, priority, dueDate } =
+      req.body;
 
     if (!title || !projectId) {
       return res
@@ -24,6 +25,8 @@ const createTask = async (req, res) => {
       project: projectId,
       owner: req.user._id,
       assignee: assignee || null,
+      priority: priority || "Medium",
+      dueDate: dueDate || null,
     });
 
     // Populate owner/assignee so the shape matches what getTasksByProject returns —
@@ -79,6 +82,8 @@ const updateTask = async (req, res) => {
     task.description = req.body.description ?? task.description;
     task.status = req.body.status ?? task.status;
     task.assignee = req.body.assignee ?? task.assignee;
+    task.priority = req.body.priority ?? task.priority;
+    task.dueDate = req.body.dueDate ?? task.dueDate;
 
     await task.save();
 
