@@ -1,0 +1,82 @@
+// Defines the Kanban column order — used to figure out "next" and "previous" status
+const STATUS_ORDER = ["ToDo", "InProgress", "Done"];
+
+const TaskCard = ({ task, onMove, onDelete, currentUserId }) => {
+  const currentIndex = STATUS_ORDER.indexOf(task.status);
+  const canMoveLeft = currentIndex > 0;
+  const canMoveRight = currentIndex < STATUS_ORDER.length - 1;
+
+  // Only the task's owner can delete it (matches backend rule)
+  const isOwner = task.owner?._id === currentUserId;
+
+  return (
+    <div style={cardStyle}>
+      <p style={{ margin: 0, fontWeight: "600" }}>{task.title}</p>
+      {task.description && (
+        <p style={{ margin: "6px 0", color: "#6b7280", fontSize: "14px" }}>
+          {task.description}
+        </p>
+      )}
+      <p style={{ margin: "6px 0", fontSize: "12px", color: "#9ca3af" }}>
+        Assignee: {task.assignee?.name || "Unassigned"}
+      </p>
+
+      <div style={{ display: "flex", gap: "6px", marginTop: "10px" }}>
+        {canMoveLeft && (
+          <button
+            onClick={() => onMove(task._id, STATUS_ORDER[currentIndex - 1])}
+            style={moveButtonStyle}
+          >
+            ← Move
+          </button>
+        )}
+        {canMoveRight && (
+          <button
+            onClick={() => onMove(task._id, STATUS_ORDER[currentIndex + 1])}
+            style={moveButtonStyle}
+          >
+            Move →
+          </button>
+        )}
+        {isOwner && (
+          <button
+            onClick={() => onDelete(task._id)}
+            style={deleteButtonStyle}
+          >
+            Delete
+          </button>
+        )}
+      </div>
+    </div>
+  );
+};
+
+const cardStyle = {
+  backgroundColor: "#fff",
+  border: "1px solid #e5e7eb",
+  borderRadius: "8px",
+  padding: "12px",
+  marginBottom: "10px",
+  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
+};
+
+const moveButtonStyle = {
+  padding: "4px 8px",
+  fontSize: "12px",
+  border: "1px solid #d1d5db",
+  borderRadius: "4px",
+  backgroundColor: "#f3f4f6",
+  cursor: "pointer",
+};
+
+const deleteButtonStyle = {
+  padding: "4px 8px",
+  fontSize: "12px",
+  border: "none",
+  borderRadius: "4px",
+  backgroundColor: "#fee2e2",
+  color: "#b91c1c",
+  cursor: "pointer",
+};
+
+export default TaskCard;

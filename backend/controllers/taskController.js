@@ -18,13 +18,22 @@ const createTask = async (req, res) => {
       return res.status(404).json({ message: "Project not found" });
     }
 
-    const task = await Task.create({
+    const created = await Task.create({
       title,
       description,
       project: projectId,
       owner: req.user._id,
       assignee: assignee || null,
     });
+
+    // Populate owner/assignee so the shape matches what getTasksByProject returns —
+    // otherwise the frontend would get raw ObjectIds instead of {name, email} objects
+    const task = await Task.findById(created._id)
+      .populate("owner", "name email")
+      .populate("assignee", "name email");
+
+    const io = req.app.get("io");
+    io.to(projectId.toString()).emit("taskCreated", task);
 
     res.status(201).json(task);
   } catch (error) {
@@ -71,7 +80,15 @@ const updateTask = async (req, res) => {
     task.status = req.body.status ?? task.status;
     task.assignee = req.body.assignee ?? task.assignee;
 
-    const updated = await task.save();
+    await task.save();
+
+    const updated = await Task.findById(task._id)
+      .populate("owner", "name email")
+      .populate("assignee", "name email");
+
+    const io = req.app.get("io");
+    io.to(task.project.toString()).emit("taskUpdated", updated);
+
     res.status(200).json(updated);
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
@@ -92,7 +109,14 @@ const deleteTask = async (req, res) => {
       return res.status(403).json({ message: "Not authorized — owner only" });
     }
 
+    const projectId = task.project.toString();
+    const taskId = task._id.toString();
+
     await task.deleteOne();
+
+    const io = req.app.get("io");
+    io.to(projectId).emit("taskDeleted", { taskId });
+
     res.status(200).json({ message: "Task deleted" });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
