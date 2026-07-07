@@ -4,16 +4,27 @@ import { useAuth } from "../context/AuthContext";
 import api from "../services/api";
 import socket from "../services/socket";
 import TaskCard from "../components/TaskCard";
+import TeamPanel from "../components/TeamPanel";
 
 const COLUMNS = ["ToDo", "InProgress", "Done"];
 
 const ProjectBoard = () => {
   const { id: projectId } = useParams(); // grabs :id from the URL
   const { user } = useAuth();
+  const [project, setProject] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const fetchProject = async () => {
+    try {
+      const res = await api.get(`/projects/${projectId}`);
+      setProject(res.data);
+    } catch (err) {
+      setError("Could not load project");
+    }
+  };
 
   const fetchTasks = async () => {
     try {
@@ -28,6 +39,7 @@ const ProjectBoard = () => {
 
   // Initial load + join this project's socket room
   useEffect(() => {
+    fetchProject();
     fetchTasks();
 
     socket.emit("joinProject", projectId);
@@ -102,6 +114,32 @@ const ProjectBoard = () => {
     }
   };
 
+  // Team management handlers — these hit the project member endpoints
+  const handleAddMember = async (email, role) => {
+    const res = await api.post(`/projects/${projectId}/members`, { email, role });
+    setProject(res.data);
+  };
+
+  const handleRoleChange = async (memberId, newRole) => {
+    const res = await api.put(`/projects/${projectId}/members/${memberId}`, {
+      role: newRole,
+    });
+    setProject(res.data);
+  };
+
+  const handleRemoveMember = async (memberId) => {
+    const res = await api.delete(`/projects/${projectId}/members/${memberId}`);
+    setProject(res.data);
+  };
+
+  // Can the CURRENT user manage the team? True if they're the owner or an admin member.
+  const canManage =
+    project &&
+    (project.owner?._id === user?._id ||
+      project.members?.some(
+        (m) => m.user._id === user?._id && m.role === "admin"
+      ));
+
   return (
     <div style={{ maxWidth: "1000px", margin: "40px auto", padding: "20px" }}>
       <Link to="/dashboard" style={{ color: "#4f46e5" }}>
@@ -109,6 +147,17 @@ const ProjectBoard = () => {
       </Link>
 
       <h2 style={{ marginTop: "10px" }}>Project Board</h2>
+
+      {project && (
+        <TeamPanel
+          project={project}
+          currentUserId={user?._id}
+          canManage={canManage}
+          onAdd={handleAddMember}
+          onRoleChange={handleRoleChange}
+          onRemove={handleRemoveMember}
+        />
+      )}
 
       {/* Create task form */}
       <form
