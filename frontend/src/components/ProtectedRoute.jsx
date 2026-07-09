@@ -5,7 +5,7 @@ const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <p style={{ textAlign: "center", marginTop: "50px" }}>Loading...</p>;
+    return <p className="mt-12 text-center text-sm text-ink-muted">Loading...</p>;
   }
 
   if (!user) {

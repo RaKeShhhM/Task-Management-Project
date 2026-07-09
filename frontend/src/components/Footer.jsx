@@ -1,20 +1,11 @@
 const Footer = () => {
   return (
-    <footer style={footerStyle}>
-      <p style={{ margin: 0 }}>
+    <footer className="mt-auto border-t border-border bg-surface px-4 py-4 text-center">
+      <p className="m-0 font-mono text-xs text-ink-faint">
         © {new Date().getFullYear()} TeamBoard — built with the MERN stack
       </p>
     </footer>
   );
-};
-
-const footerStyle = {
-  textAlign: "center",
-  padding: "16px",
-  borderTop: "1px solid #e5e7eb",
-  color: "#9ca3af",
-  fontSize: "13px",
-  marginTop: "auto", // pushes footer to bottom when content is short (with flex layout)
 };
 
 export default Footer;

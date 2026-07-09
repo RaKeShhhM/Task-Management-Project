@@ -21,13 +21,10 @@ const ActivityFeed = ({ projectId }) => {
 
   const fetchLogs = async () => {
     try {
-    //   console.log(`Fetching activity logs for project: ${projectId}`);
       const res = await api.get(`/activity/project/${projectId}`);
-    //   console.log(`Fetched activity logs for project: ${projectId}`, res.data);
       setLogs(res.data);
     } catch (err) {
-      // TEMP DEBUG: log the real error instead of failing silently
-      console.error("Activity fetch failed:", err.response?.status, err.response?.data || err.message);
+      // fail quietly — activity feed is supplementary, not core functionality
     } finally {
       setLoading(false);
     }
@@ -49,43 +46,29 @@ const ActivityFeed = ({ projectId }) => {
     return () => socket.off("activityLogged", onActivityLogged);
   }, [projectId]);
 
-  if (loading) return <p>Loading activity...</p>;
+  if (loading) return <p className="text-sm text-ink-muted">Loading activity...</p>;
 
   if (logs.length === 0) {
-    return <p style={{ color: "#6b7280" }}>No activity yet.</p>;
+    return <p className="text-sm text-ink-muted">No activity yet.</p>;
   }
 
   return (
-    <div style={containerStyle}>
+    <div className="max-h-[400px] overflow-y-auto rounded-md border border-border bg-surface px-4 py-3">
       {logs.map((log) => (
-        <div key={log._id} style={logRowStyle}>
-          <p style={{ margin: 0, fontSize: "13px" }}>
+        <div
+          key={log._id}
+          className="flex items-center justify-between gap-2 border-b border-fog py-2"
+        >
+          <p className="m-0 font-body text-[13px]">
             <strong>{log.user?.name}</strong> {log.message}
           </p>
-          <span style={{ fontSize: "11px", color: "#9ca3af" }}>
+          <span className="shrink-0 font-mono text-[11px] text-ink-faint">
             {timeAgo(log.createdAt)}
           </span>
         </div>
       ))}
     </div>
   );
-};
-
-const containerStyle = {
-  backgroundColor: "#fff",
-  border: "1px solid #e5e7eb",
-  borderRadius: "8px",
-  padding: "12px 16px",
-  maxHeight: "400px",
-  overflowY: "auto",
-};
-
-const logRowStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "8px 0",
-  borderBottom: "1px solid #f3f4f6",
 };
 
 export default ActivityFeed;

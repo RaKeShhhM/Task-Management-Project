@@ -11,11 +11,8 @@ import {
 } from "recharts";
 import { isOverdue } from "../utils/taskHelpers";
 
-const STATUS_COLORS = {
-  ToDo: "#9ca3af",
-  InProgress: "#f59e0b",
-  Done: "#22c55e",
-};
+// Raw hex for Recharts fills — can't use Tailwind classes on SVG fill attrs
+const STATUS_COLORS = { ToDo: "#94A3B8", InProgress: "#F59E0B", Done: "#16A34A" };
 
 const MembersOverview = ({ project, tasks }) => {
   const [selectedUserId, setSelectedUserId] = useState(null);
@@ -41,30 +38,34 @@ const MembersOverview = ({ project, tasks }) => {
   }));
 
   return (
-    <div style={containerStyle}>
-      <h4 style={{ marginTop: 0 }}>Team Members</h4>
+    <div className="rounded-md border border-border bg-surface p-4 shadow-card">
+      <h4 className="mt-0">Team Members</h4>
 
-      <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
+      <div className="mb-4 flex flex-wrap gap-2">
         {people.map((person) => {
           // Quick per-person task count just for the chip, so you get a hint before clicking
           const personTasks = tasks.filter((t) => t.assignee?._id === person._id);
           const taskCount = personTasks.length;
           const overdueCount = personTasks.filter(isOverdue).length;
+          const isActive = selectedUserId === person._id;
 
           return (
             <button
               key={person._id}
               onClick={() => setSelectedUserId(person._id)}
-              style={{
-                ...personChipStyle,
-                ...(selectedUserId === person._id ? personChipActiveStyle : {}),
-              }}
+              className={`flex flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-[13px] font-semibold ${
+                isActive
+                  ? "border-teal bg-teal-soft"
+                  : "border-border bg-fog"
+              }`}
             >
               {person.name}
-              <span style={roleTagStyle}>{person.roleLabel}</span>
-              <span style={countTagStyle}>{taskCount} tasks</span>
+              <span className="font-normal text-ink-muted">{person.roleLabel}</span>
+              <span className="font-normal text-teal">{taskCount} tasks</span>
               {overdueCount > 0 && (
-                <span style={overdueTagStyle}>{overdueCount} overdue</span>
+                <span className="rounded bg-danger px-1.5 py-0.5 text-[11px] font-bold text-white">
+                  {overdueCount} overdue
+                </span>
               )}
             </button>
           );
@@ -73,11 +74,9 @@ const MembersOverview = ({ project, tasks }) => {
 
       {selectedPerson ? (
         <>
-          <h5 style={{ margin: "0 0 8px" }}>
-            {selectedPerson.name}'s task breakdown
-          </h5>
+          <h5 className="mb-2 mt-0">{selectedPerson.name}'s task breakdown</h5>
           {selectedPersonTasks.length === 0 ? (
-            <p style={{ color: "#6b7280" }}>No tasks assigned to this person yet.</p>
+            <p className="text-sm text-ink-muted">No tasks assigned to this person yet.</p>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={200}>
@@ -96,13 +95,11 @@ const MembersOverview = ({ project, tasks }) => {
 
               {/* List out exactly which tasks are overdue — a chart alone doesn't tell you WHAT missed the deadline */}
               {selectedPersonTasks.some(isOverdue) && (
-                <div style={{ marginTop: "12px" }}>
-                  <p style={{ fontWeight: "600", color: "#b91c1c", margin: "0 0 6px" }}>
-                    Overdue tasks:
-                  </p>
-                  <ul style={{ margin: 0, paddingLeft: "18px" }}>
+                <div className="mt-3">
+                  <p className="mb-1.5 font-semibold text-danger">Overdue tasks:</p>
+                  <ul className="m-0 pl-4">
                     {selectedPersonTasks.filter(isOverdue).map((t) => (
-                      <li key={t._id} style={{ color: "#b91c1c", fontSize: "13px" }}>
+                      <li key={t._id} className="text-[13px] text-danger">
                         {t.title} — was due{" "}
                         {new Date(t.dueDate).toLocaleDateString()}
                       </li>
@@ -114,59 +111,12 @@ const MembersOverview = ({ project, tasks }) => {
           )}
         </>
       ) : (
-        <p style={{ color: "#6b7280" }}>
+        <p className="text-sm text-ink-muted">
           Click a team member above to see their task breakdown.
         </p>
       )}
     </div>
   );
-};
-
-const containerStyle = {
-  backgroundColor: "#fff",
-  border: "1px solid #e5e7eb",
-  borderRadius: "8px",
-  padding: "16px",
-};
-
-const personChipStyle = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "flex-start",
-  gap: "2px",
-  padding: "8px 12px",
-  border: "1px solid #e5e7eb",
-  borderRadius: "8px",
-  backgroundColor: "#f9fafb",
-  cursor: "pointer",
-  fontSize: "13px",
-  fontWeight: "600",
-};
-
-const personChipActiveStyle = {
-  borderColor: "#4f46e5",
-  backgroundColor: "#eef2ff",
-};
-
-const roleTagStyle = {
-  fontSize: "11px",
-  fontWeight: "400",
-  color: "#6b7280",
-};
-
-const countTagStyle = {
-  fontSize: "11px",
-  fontWeight: "400",
-  color: "#4f46e5",
-};
-
-const overdueTagStyle = {
-  fontSize: "11px",
-  fontWeight: "700",
-  color: "#fff",
-  backgroundColor: "#dc2626",
-  padding: "1px 6px",
-  borderRadius: "4px",
 };
 
 export default MembersOverview;
