@@ -1,4 +1,11 @@
 import { isOverdue } from "../utils/taskHelpers";
+import TaskComments from "./TaskComments";
+
+const PRIORITY_COLORS = {
+  Low: { backgroundColor: "#dbeafe", color: "#1e40af" },
+  Medium: { backgroundColor: "#fef3c7", color: "#92400e" },
+  High: { backgroundColor: "#fee2e2", color: "#991b1b" },
+};
 
 // Defines the Kanban column order — used to figure out "next" and "previous" status
 const STATUS_ORDER = ["ToDo", "InProgress", "Done"];
@@ -29,6 +36,9 @@ const TaskCard = ({
         <p style={{ margin: 0, fontWeight: "600" }}>{task.title}</p>
         {overdue && <span style={overdueBadgeStyle}>OVERDUE</span>}
       </div>
+      <span style={{ ...priorityBadgeStyle, ...PRIORITY_COLORS[task.priority] }}>
+        {task.priority}
+      </span>
       {task.description && (
         <p style={{ margin: "6px 0", color: "#6b7280", fontSize: "14px" }}>
           {task.description}
@@ -93,6 +103,8 @@ const TaskCard = ({
           </button>
         )}
       </div>
+
+      <TaskComments taskId={task._id} currentUserId={currentUserId} />
     </div>
   );
 };
@@ -121,6 +133,15 @@ const overdueBadgeStyle = {
   borderRadius: "4px",
   whiteSpace: "nowrap",
   flexShrink: 0,
+};
+
+const priorityBadgeStyle = {
+  display: "inline-block",
+  fontSize: "10px",
+  fontWeight: "600",
+  padding: "2px 8px",
+  borderRadius: "999px",
+  marginTop: "4px",
 };
 
 const cardStyle = {

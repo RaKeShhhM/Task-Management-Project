@@ -7,9 +7,10 @@ import TaskCard from "../components/TaskCard";
 import TeamPanel from "../components/TeamPanel";
 import TaskAnalytics from "../components/TaskAnalytics";
 import MembersOverview from "../components/MembersOverview";
+import ActivityFeed from "../components/ActivityFeed";
 
 const COLUMNS = ["ToDo", "InProgress", "Done"];
-const TABS = ["Add Task", "Add Members", "Members"];
+const TABS = ["Add Task", "Add Members", "Members", "Activity"];
 
 const STATUS_STYLES = {
   NotStarted: { backgroundColor: "#f3f4f6", color: "#4b5563" },
@@ -38,9 +39,15 @@ const ProjectBoard = () => {
   const [activeTab, setActiveTab] = useState("Add Task");
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState(""); // selected user id for new task
+  const [priority, setPriority] = useState("Medium"); // FIX: was missing from the create form entirely
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
+  // Search & filter state for the Kanban board
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterAssignee, setFilterAssignee] = useState("all");
 
   const fetchProject = async () => {
     try {
@@ -128,10 +135,12 @@ const ProjectBoard = () => {
         title,
         projectId,
         assignee: assignee || null, // "" means "leave unassigned"
+        priority,
         dueDate: dueDate || null,
       });
       setTitle("");
       setAssignee("");
+      setPriority("Medium");
       setDueDate("");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create task");
@@ -198,6 +207,24 @@ const ProjectBoard = () => {
         (m) => m.user._id === user?._id && m.role === "admin"
       ));
 
+  // Apply search + filters BEFORE splitting into Kanban columns.
+  // This is what the board actually renders — analytics/members tabs still
+  // use the full, unfiltered `tasks` array so their stats stay accurate.
+  const visibleTasks = tasks.filter((task) => {
+    const matchesSearch = task.title
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+
+    const matchesStatus = filterStatus === "all" || task.status === filterStatus;
+
+    const matchesAssignee =
+      filterAssignee === "all" ||
+      (filterAssignee === "unassigned" && !task.assignee) ||
+      task.assignee?._id === filterAssignee;
+
+    return matchesSearch && matchesStatus && matchesAssignee;
+  });
+
   return (
     <div style={{ maxWidth: "1000px", margin: "40px auto", padding: "20px" }}>
       <Link to="/dashboard" style={{ color: "#4f46e5" }}>
@@ -241,7 +268,7 @@ const ProjectBoard = () => {
       {/* Tab content */}
       <div style={{ marginBottom: "24px" }}>
         {activeTab === "Add Task" && (
-          <form onSubmit={handleCreateTask} style={{ display: "flex", gap: "8px" }}>
+          <form onSubmit={handleCreateTask} style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <input
               type="text"
               placeholder="New task title"
@@ -249,6 +276,7 @@ const ProjectBoard = () => {
               onChange={(e) => setTitle(e.target.value)}
               style={{
                 flex: 1,
+                minWidth: "160px",
                 padding: "10px",
                 border: "1px solid #ccc",
                 borderRadius: "6px",
@@ -269,6 +297,19 @@ const ProjectBoard = () => {
                   {person.name}
                 </option>
               ))}
+            </select>
+            <select
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              style={{
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "6px",
+              }}
+            >
+              <option value="Low">Low priority</option>
+              <option value="Medium">Medium priority</option>
+              <option value="High">High priority</option>
             </select>
             <input
               type="date"
@@ -301,14 +342,50 @@ const ProjectBoard = () => {
         {activeTab === "Members" && project && (
           <MembersOverview project={project} tasks={tasks} />
         )}
+
+        {activeTab === "Activity" && <ActivityFeed projectId={projectId} />}
       </div>
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* Overall task analytics — always visible regardless of active tab */}
+      {/* Overall task analytics — always visible, uses the FULL task list regardless of filters */}
       {!loading && <TaskAnalytics tasks={tasks} />}
 
-      {/* Kanban board — always visible regardless of active tab */}
+      {/* Search & filter bar for the board below */}
+      <div style={filterBarStyle}>
+        <input
+          type="text"
+          placeholder="🔍 Search tasks by title..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={searchInputStyle}
+        />
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          style={filterSelectStyle}
+        >
+          <option value="all">All statuses</option>
+          <option value="ToDo">ToDo</option>
+          <option value="InProgress">InProgress</option>
+          <option value="Done">Done</option>
+        </select>
+        <select
+          value={filterAssignee}
+          onChange={(e) => setFilterAssignee(e.target.value)}
+          style={filterSelectStyle}
+        >
+          <option value="all">All assignees</option>
+          <option value="unassigned">Unassigned</option>
+          {assignableUsers.map((person) => (
+            <option key={person._id} value={person._id}>
+              {person.name}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Kanban board — always visible regardless of active tab, respects search/filter */}
       <h3 style={{ marginBottom: "12px" }}>Board</h3>
       {loading ? (
         <p>Loading tasks...</p>
@@ -323,7 +400,7 @@ const ProjectBoard = () => {
           {COLUMNS.map((column) => (
             <div key={column} style={columnStyle}>
               <h4 style={{ marginTop: 0 }}>{column}</h4>
-              {tasks
+              {visibleTasks
                 .filter((task) => task.status === column)
                 .map((task) => (
                   <TaskCard
@@ -374,6 +451,7 @@ const tabRowStyle = {
   gap: "6px",
   borderBottom: "1px solid #e5e7eb",
   marginBottom: "16px",
+  flexWrap: "wrap",
 };
 
 const tabButtonStyle = {
@@ -390,6 +468,27 @@ const tabButtonStyle = {
 const tabButtonActiveStyle = {
   color: "#4f46e5",
   borderBottom: "2px solid #4f46e5",
+};
+
+const filterBarStyle = {
+  display: "flex",
+  gap: "8px",
+  marginBottom: "16px",
+  flexWrap: "wrap",
+};
+
+const searchInputStyle = {
+  flex: 1,
+  minWidth: "200px",
+  padding: "10px",
+  border: "1px solid #ccc",
+  borderRadius: "6px",
+};
+
+const filterSelectStyle = {
+  padding: "10px",
+  border: "1px solid #ccc",
+  borderRadius: "6px",
 };
 
 export default ProjectBoard;

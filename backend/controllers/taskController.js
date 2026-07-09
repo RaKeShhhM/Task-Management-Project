@@ -1,5 +1,7 @@
 const Task = require("../models/Task");
 const Project = require("../models/Project");
+const logActivity = require("../utils/logActivity");
+const sendEmail = require("../utils/sendEmail");
 
 // @route   POST /api/tasks
 // @access  Private
@@ -37,6 +39,30 @@ const createTask = async (req, res) => {
 
     const io = req.app.get("io");
     io.to(projectId.toString()).emit("taskCreated", task);
+
+    await logActivity(
+      io,
+      projectId,
+      req.user._id,
+      `created task "${task.title}"${
+        task.assignee ? ` and assigned it to ${task.assignee.name}` : ""
+      }`
+    );
+
+    // Fire off an email if the task was assigned to someone right away.
+    // Wrapped so a broken email config never breaks task creation itself.
+    // console.log("Sending assignment email:");
+    if (task.assignee?.email) {
+      try {
+        await sendEmail(
+          task.assignee.email,
+          `You've been assigned a task: ${task.title}`,
+          `Hi ${task.assignee.name},\n\n${req.user.name} assigned you a task in "${project.title}":\n\n"${task.title}"\n\n${task.dueDate ? `Due: ${new Date(task.dueDate).toLocaleDateString()}` : ""}`
+        );
+      } catch (emailError) {
+        console.error("Failed to send assignment email:", emailError.message);
+      }
+    }
 
     res.status(201).json(task);
   } catch (error) {
@@ -78,6 +104,11 @@ const updateTask = async (req, res) => {
         .json({ message: "Not authorized — must be owner or assignee" });
     }
 
+    // Snapshot the "before" values so we can tell what actually changed,
+    // for meaningful activity log messages and to know when to email someone new
+    const previousStatus = task.status;
+    const previousAssigneeId = task.assignee?.toString() || null;
+
     task.title = req.body.title ?? task.title;
     task.description = req.body.description ?? task.description;
     task.status = req.body.status ?? task.status;
@@ -93,6 +124,44 @@ const updateTask = async (req, res) => {
 
     const io = req.app.get("io");
     io.to(task.project.toString()).emit("taskUpdated", updated);
+
+    // Build a human-readable message describing what changed
+    const newAssigneeId = updated.assignee?._id?.toString() || null;
+    const statusChanged = previousStatus !== updated.status;
+    const assigneeChanged = previousAssigneeId !== newAssigneeId;
+
+    if (statusChanged) {
+      await logActivity(
+        io,
+        task.project,
+        req.user._id,
+        `moved "${updated.title}" to ${updated.status}`
+      );
+    }
+
+    if (assigneeChanged) {
+      await logActivity(
+        io,
+        task.project,
+        req.user._id,
+        updated.assignee
+          ? `assigned "${updated.title}" to ${updated.assignee.name}`
+          : `unassigned "${updated.title}"`
+      );
+
+      // Only email when there's a NEW assignee (not on unassignment)
+      if (updated.assignee?.email) {
+        try {
+          await sendEmail(
+            updated.assignee.email,
+            `You've been assigned a task: ${updated.title}`,
+            `Hi ${updated.assignee.name},\n\n${req.user.name} assigned you a task:\n\n"${updated.title}"\n\n${updated.dueDate ? `Due: ${new Date(updated.dueDate).toLocaleDateString()}` : ""}`
+          );
+        } catch (emailError) {
+          console.error("Failed to send assignment email:", emailError.message);
+        }
+      }
+    }
 
     res.status(200).json(updated);
   } catch (error) {
@@ -116,11 +185,14 @@ const deleteTask = async (req, res) => {
 
     const projectId = task.project.toString();
     const taskId = task._id.toString();
+    const taskTitle = task.title;
 
     await task.deleteOne();
 
     const io = req.app.get("io");
     io.to(projectId).emit("taskDeleted", { taskId });
+
+    await logActivity(io, projectId, req.user._id, `deleted task "${taskTitle}"`);
 
     res.status(200).json({ message: "Task deleted" });
   } catch (error) {
