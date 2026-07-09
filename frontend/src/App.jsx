@@ -11,18 +11,12 @@ import ProjectBoard from "./pages/ProjectBoard";
 function App() {
   return (
     <AuthProvider>
-      {/* minHeight + flex column keeps the footer pinned to the bottom
+      {/* min-h-screen + flex column keeps the footer pinned to the bottom
           even on pages with little content, instead of floating mid-page */}
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-        }}
-      >
+      <div className="flex min-h-screen flex-col bg-fog">
         <Navbar />
 
-        <main style={{ flex: 1 }}>
+        <main className="flex-1">
           <Routes>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

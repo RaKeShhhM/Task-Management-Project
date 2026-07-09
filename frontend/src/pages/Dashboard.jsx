@@ -5,15 +5,15 @@ import api from "../services/api";
 import ProjectAnalytics from "../components/ProjectAnalytics";
 
 const STATUS_STYLES = {
-  NotStarted: { backgroundColor: "#f3f4f6", color: "#4b5563" },
-  InProgress: { backgroundColor: "#fef3c7", color: "#92400e" },
-  Completed: { backgroundColor: "#dcfce7", color: "#166534" },
+  NotStarted: "bg-status-todo-soft text-ink-muted",
+  InProgress: "bg-status-progress-soft text-amber-800",
+  Completed: "bg-status-done-soft text-green-800",
 };
 
 const PRIORITY_STYLES = {
-  Low: { backgroundColor: "#dbeafe", color: "#1e40af" },
-  Medium: { backgroundColor: "#fef3c7", color: "#92400e" },
-  High: { backgroundColor: "#fee2e2", color: "#991b1b" },
+  Low: "bg-priority-low-soft text-blue-800",
+  Medium: "bg-priority-medium-soft text-amber-800",
+  High: "bg-priority-high-soft text-red-800",
 };
 
 const STATUS_LABELS = {
@@ -125,30 +125,36 @@ const Dashboard = () => {
   };
 
   return (
-    <div style={{ maxWidth: "900px", margin: "40px auto", padding: "20px" }}>
-      <h2 style={{ marginBottom: "20px" }}>Welcome, {user?.name} 👋</h2>
+    <div className="mx-auto max-w-3xl px-4 py-6 sm:px-6 sm:py-10">
+      <p className="m-0 mb-1 font-mono text-xs uppercase tracking-wider text-teal">
+        Dashboard
+      </p>
+      <h2 className="mb-6 font-heading text-2xl text-ink sm:text-[26px]">
+        Welcome back, {user?.name}
+      </h2>
 
-      {/* Tab navigation */}
-      <div style={tabRowStyle}>
+      {/* Tab navigation — scrolls horizontally on narrow screens instead of wrapping awkwardly */}
+      <div className="mb-6 flex gap-1.5 overflow-x-auto border-b border-border">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            style={{
-              ...tabButtonStyle,
-              ...(activeTab === tab ? tabButtonActiveStyle : {}),
-            }}
+            className={`whitespace-nowrap border-b-2 px-3 py-2.5 font-body text-sm font-medium sm:px-4 ${
+              activeTab === tab
+                ? "border-teal text-teal"
+                : "border-transparent text-ink-muted"
+            }`}
           >
             {tab}
           </button>
         ))}
       </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       {activeTab === "Stats" &&
         (loading ? (
-          <p>Loading stats...</p>
+          <p className="text-sm text-ink-muted">Loading stats...</p>
         ) : (
           <ProjectAnalytics projects={projects} />
         ))}
@@ -156,35 +162,32 @@ const Dashboard = () => {
       {activeTab === "Create Project" && (
         <form
           onSubmit={handleCreateProject}
-          style={{
-            padding: "16px",
-            border: "1px solid #e5e7eb",
-            borderRadius: "8px",
-          }}
+          className="rounded-md border border-border bg-surface p-4 shadow-card sm:p-5"
         >
-          <h3 style={{ marginTop: 0 }}>Create a new project</h3>
+          <h3 className="mb-4 mt-0 text-lg">Create a new project</h3>
           <input
             type="text"
             placeholder="Project title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            style={inputStyle}
+            className="mb-2.5 block w-full rounded-md border border-border px-3 py-2.5 font-body text-sm"
           />
           <input
             type="text"
             placeholder="Description (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            style={inputStyle}
+            className="mb-2.5 block w-full rounded-md border border-border px-3 py-2.5 font-body text-sm"
           />
 
-          <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-            <label style={labelStyle}>
+          {/* Stacks vertically on mobile, row on larger screens */}
+          <div className="mb-3.5 flex flex-col gap-2.5 sm:flex-row sm:gap-2.5">
+            <label className="flex flex-1 flex-col gap-1 font-mono text-xs text-ink-muted">
               Priority
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                style={selectStyle}
+                className="rounded-md border border-border p-2 font-body text-sm"
               >
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
@@ -192,28 +195,31 @@ const Dashboard = () => {
               </select>
             </label>
 
-            <label style={labelStyle}>
+            <label className="flex flex-1 flex-col gap-1 font-mono text-xs text-ink-muted">
               Start date
               <input
                 type="date"
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                style={selectStyle}
+                className="rounded-md border border-border p-2 font-body text-sm"
               />
             </label>
 
-            <label style={labelStyle}>
+            <label className="flex flex-1 flex-col gap-1 font-mono text-xs text-ink-muted">
               Due date
               <input
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
-                style={selectStyle}
+                className="rounded-md border border-border p-2 font-body text-sm"
               />
             </label>
           </div>
 
-          <button type="submit" style={createButtonStyle}>
+          <button
+            type="submit"
+            className="rounded-md bg-teal px-4 py-2.5 font-body text-sm font-semibold text-white hover:bg-teal-dark"
+          >
             + Create Project
           </button>
         </form>
@@ -221,89 +227,80 @@ const Dashboard = () => {
 
       {activeTab === "Projects" && (
         <div>
-          {/* Sort controls */}
-          <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "16px" }}>
-            <span style={{ fontSize: "13px", color: "#6b7280" }}>Sort by:</span>
+          {/* Sort controls — wraps on narrow screens */}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <span className="font-mono text-xs text-ink-faint">Sort by</span>
             <button
               onClick={() => handleSortChange("deadline")}
-              style={{
-                ...sortButtonStyle,
-                ...(sortBy === "deadline" ? sortButtonActiveStyle : {}),
-              }}
+              className={`rounded-full border px-3.5 py-1.5 font-body text-xs ${
+                sortBy === "deadline"
+                  ? "border-teal bg-teal text-white"
+                  : "border-border bg-surface text-ink-muted"
+              }`}
             >
               Closing Deadline
             </button>
             <button
               onClick={() => handleSortChange("priority")}
-              style={{
-                ...sortButtonStyle,
-                ...(sortBy === "priority" ? sortButtonActiveStyle : {}),
-              }}
+              className={`rounded-full border px-3.5 py-1.5 font-body text-xs ${
+                sortBy === "priority"
+                  ? "border-teal bg-teal text-white"
+                  : "border-border bg-surface text-ink-muted"
+              }`}
             >
               High Priority First
             </button>
           </div>
 
           {loading ? (
-            <p>Loading projects...</p>
+            <p className="text-sm text-ink-muted">Loading projects...</p>
           ) : sortedProjects.length === 0 ? (
-            <p style={{ color: "#6b7280" }}>
+            <p className="text-sm text-ink-muted">
               No projects yet — create one in the "Create Project" tab.
             </p>
           ) : (
             <>
-              <div style={{ display: "grid", gap: "12px" }}>
+              <div className="grid gap-3">
                 {pageProjects.map((project) => {
                   const isOwner = project.owner?._id === user?._id;
                   return (
                     <Link
                       key={project._id}
                       to={`/projects/${project._id}`}
-                      style={projectCardStyle}
+                      className="block rounded-md border border-border bg-surface p-4 text-ink no-underline shadow-card"
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "flex-start",
-                        }}
-                      >
-                        <div style={{ flex: 1 }}>
-                          <div
-                            style={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "8px",
-                              flexWrap: "wrap",
-                            }}
-                          >
-                            <strong>{project.title}</strong>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <strong className="font-heading text-base">
+                              {project.title}
+                            </strong>
                             <span
-                              style={{ ...badgeStyle, ...STATUS_STYLES[project.status] }}
+                              className={`rounded-full px-2.5 py-0.5 font-body text-[11px] font-semibold ${STATUS_STYLES[project.status]}`}
                             >
                               {STATUS_LABELS[project.status]}
                             </span>
                             <span
-                              style={{ ...badgeStyle, ...PRIORITY_STYLES[project.priority] }}
+                              className={`rounded-full px-2.5 py-0.5 font-body text-[11px] font-semibold ${PRIORITY_STYLES[project.priority]}`}
                             >
                               {project.priority}
                             </span>
                           </div>
                           {project.description && (
-                            <p style={{ margin: "6px 0 0", color: "#6b7280" }}>
+                            <p className="mt-1.5 text-sm text-ink-muted">
                               {project.description}
                             </p>
                           )}
                           {project.dueDate && (
-                            <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#9ca3af" }}>
-                              Due: {new Date(project.dueDate).toLocaleDateString()}
+                            <p className="mt-1.5 font-mono text-xs text-ink-faint">
+                              Due {new Date(project.dueDate).toLocaleDateString()}
                             </p>
                           )}
                         </div>
                         {isOwner && (
                           <button
                             onClick={(e) => handleDeleteProject(e, project._id)}
-                            style={deleteProjectButtonStyle}
+                            className="shrink-0 rounded-md bg-danger-soft px-2.5 py-1 font-body text-xs text-danger"
                           >
                             Delete
                           </button>
@@ -315,21 +312,21 @@ const Dashboard = () => {
               </div>
 
               {/* Pagination controls */}
-              <div style={paginationRowStyle}>
+              <div className="mt-6 flex items-center justify-center gap-4">
                 <button
                   onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
                   disabled={safePage === 0}
-                  style={pageButtonStyle}
+                  className="rounded-md border border-border bg-surface px-3.5 py-1.5 text-sm text-ink disabled:opacity-40"
                 >
                   ← Prev
                 </button>
-                <span style={{ fontSize: "13px", color: "#6b7280" }}>
+                <span className="font-mono text-xs text-ink-muted">
                   Page {safePage + 1} of {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage((p) => Math.min(totalPages - 1, p + 1))}
                   disabled={safePage >= totalPages - 1}
-                  style={pageButtonStyle}
+                  className="rounded-md border border-border bg-surface px-3.5 py-1.5 text-sm text-ink disabled:opacity-40"
                 >
                   Next →
                 </button>
@@ -340,125 +337,6 @@ const Dashboard = () => {
       )}
     </div>
   );
-};
-
-const inputStyle = {
-  display: "block",
-  width: "100%",
-  padding: "10px",
-  marginBottom: "10px",
-  border: "1px solid #ccc",
-  borderRadius: "6px",
-  boxSizing: "border-box",
-};
-
-const labelStyle = {
-  display: "flex",
-  flexDirection: "column",
-  fontSize: "12px",
-  color: "#6b7280",
-  flex: 1,
-  gap: "4px",
-};
-
-const selectStyle = {
-  padding: "8px",
-  border: "1px solid #ccc",
-  borderRadius: "6px",
-};
-
-const createButtonStyle = {
-  padding: "8px 16px",
-  backgroundColor: "#4f46e5",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontWeight: "bold",
-};
-
-const deleteProjectButtonStyle = {
-  padding: "4px 10px",
-  fontSize: "12px",
-  border: "none",
-  borderRadius: "4px",
-  backgroundColor: "#fee2e2",
-  color: "#b91c1c",
-  cursor: "pointer",
-  flexShrink: 0,
-};
-
-const projectCardStyle = {
-  display: "block",
-  padding: "14px",
-  border: "1px solid #e5e7eb",
-  borderRadius: "8px",
-  textDecoration: "none",
-  color: "#111827",
-  backgroundColor: "#f9fafb",
-};
-
-const badgeStyle = {
-  fontSize: "11px",
-  fontWeight: "600",
-  padding: "2px 8px",
-  borderRadius: "999px",
-};
-
-const tabRowStyle = {
-  display: "flex",
-  gap: "6px",
-  borderBottom: "1px solid #e5e7eb",
-  marginBottom: "20px",
-};
-
-const tabButtonStyle = {
-  padding: "10px 16px",
-  border: "none",
-  background: "none",
-  cursor: "pointer",
-  fontSize: "14px",
-  fontWeight: "500",
-  color: "#6b7280",
-  borderBottom: "2px solid transparent",
-};
-
-const tabButtonActiveStyle = {
-  color: "#4f46e5",
-  borderBottom: "2px solid #4f46e5",
-};
-
-const sortButtonStyle = {
-  padding: "6px 12px",
-  fontSize: "12px",
-  border: "1px solid #d1d5db",
-  borderRadius: "999px",
-  backgroundColor: "#fff",
-  color: "#374151",
-  cursor: "pointer",
-};
-
-const sortButtonActiveStyle = {
-  backgroundColor: "#4f46e5",
-  color: "#fff",
-  borderColor: "#4f46e5",
-};
-
-const paginationRowStyle = {
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  gap: "16px",
-  marginTop: "20px",
-};
-
-const pageButtonStyle = {
-  padding: "6px 14px",
-  fontSize: "13px",
-  border: "1px solid #d1d5db",
-  borderRadius: "6px",
-  backgroundColor: "#fff",
-  cursor: "pointer",
 };
 
 export default Dashboard;

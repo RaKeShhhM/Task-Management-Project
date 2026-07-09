@@ -73,27 +73,30 @@ const TaskComments = ({ taskId, currentUserId }) => {
   };
 
   return (
-    <div style={{ marginTop: "8px" }}>
-      <button onClick={() => setOpen(!open)} style={toggleButtonStyle}>
+    <div className="mt-2">
+      <button
+        onClick={() => setOpen(!open)}
+        className="p-0 font-body text-xs text-teal"
+      >
         💬 {open ? "Hide comments" : `Comments${comments.length > 0 ? ` (${comments.length})` : ""}`}
       </button>
 
       {open && (
-        <div style={threadStyle}>
+        <div className="mt-1.5 rounded-md bg-fog p-2">
           {loading ? (
-            <p style={{ fontSize: "12px", color: "#9ca3af" }}>Loading...</p>
+            <p className="text-xs text-ink-faint">Loading...</p>
           ) : comments.length === 0 ? (
-            <p style={{ fontSize: "12px", color: "#9ca3af" }}>No comments yet.</p>
+            <p className="text-xs text-ink-faint">No comments yet.</p>
           ) : (
             comments.map((c) => (
-              <div key={c._id} style={commentRowStyle}>
-                <p style={{ margin: 0, fontSize: "12px" }}>
+              <div key={c._id} className="mb-1 flex items-center justify-between gap-2">
+                <p className="m-0 text-xs">
                   <strong>{c.author?.name}</strong>: {c.text}
                 </p>
                 {c.author?._id === currentUserId && (
                   <button
                     onClick={() => handleDelete(c._id)}
-                    style={deleteCommentButtonStyle}
+                    className="shrink-0 text-sm leading-none text-danger"
                   >
                     ×
                   </button>
@@ -102,15 +105,18 @@ const TaskComments = ({ taskId, currentUserId }) => {
             ))
           )}
 
-          <form onSubmit={handleAddComment} style={{ display: "flex", gap: "4px", marginTop: "6px" }}>
+          <form onSubmit={handleAddComment} className="mt-1.5 flex gap-1">
             <input
               type="text"
               placeholder="Write a comment..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              style={commentInputStyle}
+              className="flex-1 rounded border border-border px-1.5 py-1.5 text-xs"
             />
-            <button type="submit" style={commentSubmitStyle}>
+            <button
+              type="submit"
+              className="rounded bg-teal px-2.5 py-1.5 text-xs text-white hover:bg-teal-dark"
+            >
               Send
             </button>
           </form>
@@ -118,56 +124,6 @@ const TaskComments = ({ taskId, currentUserId }) => {
       )}
     </div>
   );
-};
-
-const toggleButtonStyle = {
-  background: "none",
-  border: "none",
-  color: "#4f46e5",
-  fontSize: "12px",
-  cursor: "pointer",
-  padding: 0,
-};
-
-const threadStyle = {
-  marginTop: "6px",
-  padding: "8px",
-  backgroundColor: "#f9fafb",
-  borderRadius: "6px",
-};
-
-const commentRowStyle = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "4px",
-};
-
-const deleteCommentButtonStyle = {
-  background: "none",
-  border: "none",
-  color: "#b91c1c",
-  cursor: "pointer",
-  fontSize: "14px",
-  lineHeight: 1,
-};
-
-const commentInputStyle = {
-  flex: 1,
-  padding: "6px",
-  fontSize: "12px",
-  border: "1px solid #d1d5db",
-  borderRadius: "4px",
-};
-
-const commentSubmitStyle = {
-  padding: "6px 10px",
-  fontSize: "12px",
-  border: "none",
-  borderRadius: "4px",
-  backgroundColor: "#4f46e5",
-  color: "#fff",
-  cursor: "pointer",
 };
 
 export default TaskComments;

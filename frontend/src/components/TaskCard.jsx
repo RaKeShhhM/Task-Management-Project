@@ -1,10 +1,10 @@
 import { isOverdue } from "../utils/taskHelpers";
 import TaskComments from "./TaskComments";
 
-const PRIORITY_COLORS = {
-  Low: { backgroundColor: "#dbeafe", color: "#1e40af" },
-  Medium: { backgroundColor: "#fef3c7", color: "#92400e" },
-  High: { backgroundColor: "#fee2e2", color: "#991b1b" },
+const PRIORITY_STYLES = {
+  Low: "bg-priority-low-soft text-blue-800",
+  Medium: "bg-priority-medium-soft text-amber-800",
+  High: "bg-priority-high-soft text-red-800",
 };
 
 // Defines the Kanban column order — used to figure out "next" and "previous" status
@@ -31,28 +31,35 @@ const TaskCard = ({
   const canReassign = isOwner || isAssignee;
 
   return (
-    <div style={{ ...cardStyle, ...(overdue ? overdueCardStyle : {}) }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <p style={{ margin: 0, fontWeight: "600" }}>{task.title}</p>
-        {overdue && <span style={overdueBadgeStyle}>OVERDUE</span>}
+    <div
+      className={`mb-2.5 rounded-md border p-3 shadow-card ${
+        overdue ? "border-red-300 bg-danger-soft" : "border-border bg-surface"
+      }`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="m-0 font-body text-sm font-semibold">{task.title}</p>
+        {overdue && (
+          <span className="shrink-0 whitespace-nowrap rounded bg-danger px-1.5 py-0.5 font-body text-[10px] font-bold text-white">
+            OVERDUE
+          </span>
+        )}
       </div>
-      <span style={{ ...priorityBadgeStyle, ...PRIORITY_COLORS[task.priority] }}>
+
+      <span
+        className={`mt-1 inline-block rounded-full px-2 py-0.5 font-body text-[10px] font-semibold ${PRIORITY_STYLES[task.priority]}`}
+      >
         {task.priority}
       </span>
+
       {task.description && (
-        <p style={{ margin: "6px 0", color: "#6b7280", fontSize: "14px" }}>
-          {task.description}
-        </p>
+        <p className="my-1.5 font-body text-sm text-ink-muted">{task.description}</p>
       )}
 
       {task.dueDate && (
         <p
-          style={{
-            margin: "4px 0",
-            fontSize: "12px",
-            color: overdue ? "#b91c1c" : "#9ca3af",
-            fontWeight: overdue ? "600" : "400",
-          }}
+          className={`my-1 font-mono text-xs ${
+            overdue ? "font-semibold text-danger" : "text-ink-faint"
+          }`}
         >
           Due: {new Date(task.dueDate).toLocaleDateString()}
         </p>
@@ -62,7 +69,7 @@ const TaskCard = ({
         <select
           value={task.assignee?._id || ""}
           onChange={(e) => onReassign(task._id, e.target.value)}
-          style={assigneeSelectStyle}
+          className="mb-1.5 w-full rounded border border-border px-1.5 py-1 font-body text-xs"
         >
           <option value="">Unassigned</option>
           {assignableUsers.map((person) => (
@@ -72,16 +79,16 @@ const TaskCard = ({
           ))}
         </select>
       ) : (
-        <p style={{ margin: "6px 0", fontSize: "12px", color: "#9ca3af" }}>
+        <p className="my-1.5 font-body text-xs text-ink-faint">
           Assignee: {task.assignee?.name || "Unassigned"}
         </p>
       )}
 
-      <div style={{ display: "flex", gap: "6px", marginTop: "10px" }}>
+      <div className="mt-2.5 flex gap-1.5">
         {canMoveLeft && (
           <button
             onClick={() => onMove(task._id, STATUS_ORDER[currentIndex - 1])}
-            style={moveButtonStyle}
+            className="rounded border border-border bg-fog px-2 py-1 font-body text-xs"
           >
             ← Move
           </button>
@@ -89,7 +96,7 @@ const TaskCard = ({
         {canMoveRight && (
           <button
             onClick={() => onMove(task._id, STATUS_ORDER[currentIndex + 1])}
-            style={moveButtonStyle}
+            className="rounded border border-border bg-fog px-2 py-1 font-body text-xs"
           >
             Move →
           </button>
@@ -97,7 +104,7 @@ const TaskCard = ({
         {isOwner && (
           <button
             onClick={() => onDelete(task._id)}
-            style={deleteButtonStyle}
+            className="rounded bg-danger-soft px-2 py-1 font-body text-xs text-danger"
           >
             Delete
           </button>
@@ -107,69 +114,6 @@ const TaskCard = ({
       <TaskComments taskId={task._id} currentUserId={currentUserId} />
     </div>
   );
-};
-
-const assigneeSelectStyle = {
-  width: "100%",
-  padding: "4px 6px",
-  fontSize: "12px",
-  border: "1px solid #d1d5db",
-  borderRadius: "4px",
-  marginBottom: "6px",
-  boxSizing: "border-box",
-};
-
-const overdueCardStyle = {
-  borderColor: "#fca5a5",
-  backgroundColor: "#fef2f2",
-};
-
-const overdueBadgeStyle = {
-  fontSize: "10px",
-  fontWeight: "700",
-  color: "#fff",
-  backgroundColor: "#dc2626",
-  padding: "2px 6px",
-  borderRadius: "4px",
-  whiteSpace: "nowrap",
-  flexShrink: 0,
-};
-
-const priorityBadgeStyle = {
-  display: "inline-block",
-  fontSize: "10px",
-  fontWeight: "600",
-  padding: "2px 8px",
-  borderRadius: "999px",
-  marginTop: "4px",
-};
-
-const cardStyle = {
-  backgroundColor: "#fff",
-  border: "1px solid #e5e7eb",
-  borderRadius: "8px",
-  padding: "12px",
-  marginBottom: "10px",
-  boxShadow: "0 1px 2px rgba(0,0,0,0.05)",
-};
-
-const moveButtonStyle = {
-  padding: "4px 8px",
-  fontSize: "12px",
-  border: "1px solid #d1d5db",
-  borderRadius: "4px",
-  backgroundColor: "#f3f4f6",
-  cursor: "pointer",
-};
-
-const deleteButtonStyle = {
-  padding: "4px 8px",
-  fontSize: "12px",
-  border: "none",
-  borderRadius: "4px",
-  backgroundColor: "#fee2e2",
-  color: "#b91c1c",
-  cursor: "pointer",
 };
 
 export default TaskCard;

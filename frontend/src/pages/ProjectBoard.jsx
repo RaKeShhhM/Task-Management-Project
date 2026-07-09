@@ -13,15 +13,15 @@ const COLUMNS = ["ToDo", "InProgress", "Done"];
 const TABS = ["Add Task", "Add Members", "Members", "Activity"];
 
 const STATUS_STYLES = {
-  NotStarted: { backgroundColor: "#f3f4f6", color: "#4b5563" },
-  InProgress: { backgroundColor: "#fef3c7", color: "#92400e" },
-  Completed: { backgroundColor: "#dcfce7", color: "#166534" },
+  NotStarted: "bg-status-todo-soft text-ink-muted",
+  InProgress: "bg-status-progress-soft text-amber-800",
+  Completed: "bg-status-done-soft text-green-800",
 };
 
 const PRIORITY_STYLES = {
-  Low: { backgroundColor: "#dbeafe", color: "#1e40af" },
-  Medium: { backgroundColor: "#fef3c7", color: "#92400e" },
-  High: { backgroundColor: "#fee2e2", color: "#991b1b" },
+  Low: "bg-priority-low-soft text-blue-800",
+  Medium: "bg-priority-medium-soft text-amber-800",
+  High: "bg-priority-high-soft text-red-800",
 };
 
 const STATUS_LABELS = {
@@ -29,6 +29,11 @@ const STATUS_LABELS = {
   InProgress: "In Progress",
   Completed: "Completed",
 };
+
+// Dot colors for the route-line header — kept as raw hex since this renders
+// via inline style on a small decorative dot, not worth a Tailwind class each
+const ROUTE_DOT_COLORS = { ToDo: "#94A3B8", InProgress: "#F59E0B", Done: "#16A34A" };
+const ROUTE_LABELS = { ToDo: "To Do", InProgress: "In Progress", Done: "Done" };
 
 const ProjectBoard = () => {
   const { id: projectId } = useParams(); // grabs :id from the URL
@@ -39,7 +44,7 @@ const ProjectBoard = () => {
   const [activeTab, setActiveTab] = useState("Add Task");
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState(""); // selected user id for new task
-  const [priority, setPriority] = useState("Medium"); // FIX: was missing from the create form entirely
+  const [priority, setPriority] = useState("Medium");
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -226,39 +231,44 @@ const ProjectBoard = () => {
   });
 
   return (
-    <div style={{ maxWidth: "1000px", margin: "40px auto", padding: "20px" }}>
-      <Link to="/dashboard" style={{ color: "#4f46e5" }}>
+    <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+      <Link to="/dashboard" className="text-sm text-teal no-underline hover:underline">
         ← Back to Dashboard
       </Link>
 
       {/* Project header: name + status/priority badges */}
       {project && (
-        <div style={{ margin: "10px 0 20px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
-            <h2 style={{ margin: 0 }}>{project.title}</h2>
-            <span style={{ ...badgeStyle, ...STATUS_STYLES[project.status] }}>
+        <div className="my-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h2 className="font-heading text-xl sm:text-2xl">{project.title}</h2>
+            <span
+              className={`rounded-full px-2.5 py-1 font-body text-xs font-semibold ${STATUS_STYLES[project.status]}`}
+            >
               {STATUS_LABELS[project.status]}
             </span>
-            <span style={{ ...badgeStyle, ...PRIORITY_STYLES[project.priority] }}>
+            <span
+              className={`rounded-full px-2.5 py-1 font-body text-xs font-semibold ${PRIORITY_STYLES[project.priority]}`}
+            >
               {project.priority} priority
             </span>
           </div>
           {project.description && (
-            <p style={{ color: "#6b7280", marginTop: "6px" }}>{project.description}</p>
+            <p className="mt-1.5 text-sm text-ink-muted">{project.description}</p>
           )}
         </div>
       )}
 
-      {/* Tab navigation */}
-      <div style={tabRowStyle}>
+      {/* Tab navigation — scrolls horizontally on narrow screens */}
+      <div className="mb-4 flex gap-1.5 overflow-x-auto border-b border-border">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            style={{
-              ...tabButtonStyle,
-              ...(activeTab === tab ? tabButtonActiveStyle : {}),
-            }}
+            className={`whitespace-nowrap border-b-2 px-3 py-2.5 font-body text-sm font-medium ${
+              activeTab === tab
+                ? "border-teal text-teal"
+                : "border-transparent text-ink-muted"
+            }`}
           >
             {tab}
           </button>
@@ -266,30 +276,20 @@ const ProjectBoard = () => {
       </div>
 
       {/* Tab content */}
-      <div style={{ marginBottom: "24px" }}>
+      <div className="mb-6">
         {activeTab === "Add Task" && (
-          <form onSubmit={handleCreateTask} style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <form onSubmit={handleCreateTask} className="flex flex-wrap gap-2">
             <input
               type="text"
               placeholder="New task title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              style={{
-                flex: 1,
-                minWidth: "160px",
-                padding: "10px",
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-              }}
+              className="min-w-[160px] flex-1 rounded-md border border-border px-3 py-2.5 font-body text-sm"
             />
             <select
               value={assignee}
               onChange={(e) => setAssignee(e.target.value)}
-              style={{
-                padding: "10px",
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-              }}
+              className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
             >
               <option value="">Unassigned</option>
               {assignableUsers.map((person) => (
@@ -301,11 +301,7 @@ const ProjectBoard = () => {
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              style={{
-                padding: "10px",
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-              }}
+              className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
             >
               <option value="Low">Low priority</option>
               <option value="Medium">Medium priority</option>
@@ -315,14 +311,13 @@ const ProjectBoard = () => {
               type="date"
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
-              style={{
-                padding: "10px",
-                border: "1px solid #ccc",
-                borderRadius: "6px",
-              }}
               title="Due date (optional)"
+              className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
             />
-            <button type="submit" style={addButtonStyle}>
+            <button
+              type="submit"
+              className="whitespace-nowrap rounded-md bg-teal px-4 py-2.5 font-body text-sm font-semibold text-white hover:bg-teal-dark"
+            >
               + Add Task
             </button>
           </form>
@@ -346,24 +341,24 @@ const ProjectBoard = () => {
         {activeTab === "Activity" && <ActivityFeed projectId={projectId} />}
       </div>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       {/* Overall task analytics — always visible, uses the FULL task list regardless of filters */}
       {!loading && <TaskAnalytics tasks={tasks} />}
 
       {/* Search & filter bar for the board below */}
-      <div style={filterBarStyle}>
+      <div className="mb-4 flex flex-wrap gap-2">
         <input
           type="text"
           placeholder="🔍 Search tasks by title..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={searchInputStyle}
+          className="min-w-[200px] flex-1 rounded-md border border-border px-3 py-2.5 font-body text-sm"
         />
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          style={filterSelectStyle}
+          className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
         >
           <option value="all">All statuses</option>
           <option value="ToDo">ToDo</option>
@@ -373,7 +368,7 @@ const ProjectBoard = () => {
         <select
           value={filterAssignee}
           onChange={(e) => setFilterAssignee(e.target.value)}
-          style={filterSelectStyle}
+          className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
         >
           <option value="all">All assignees</option>
           <option value="unassigned">Unassigned</option>
@@ -385,21 +380,38 @@ const ProjectBoard = () => {
         </select>
       </div>
 
-      {/* Kanban board — always visible regardless of active tab, respects search/filter */}
-      <h3 style={{ marginBottom: "12px" }}>Board</h3>
+      {/* Route-line header: the signature "journey" strip showing task counts
+          per stage, connected by a line — echoes the Navbar logomark */}
+      <div className="relative mb-4 flex items-start justify-between rounded-md border border-border bg-surface px-6 py-4 shadow-card">
+        <div className="pointer-events-none absolute left-10 right-10 top-[26px] h-px bg-border" />
+        {COLUMNS.map((column) => {
+          const count = visibleTasks.filter((t) => t.status === column).length;
+          return (
+            <div key={column} className="relative z-10 flex flex-col items-center gap-1.5">
+              <span
+                className="h-3 w-3 rounded-full ring-4 ring-surface"
+                style={{ backgroundColor: ROUTE_DOT_COLORS[column] }}
+              />
+              <span className="font-body text-xs font-medium text-ink-muted">
+                {ROUTE_LABELS[column]}
+              </span>
+              <span className="font-mono text-sm font-semibold text-ink">{count}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Kanban board — stacks to 1 column on mobile, 3 side-by-side from sm: up */}
+      <h3 className="mb-3 text-lg">Board</h3>
       {loading ? (
-        <p>Loading tasks...</p>
+        <p className="text-sm text-ink-muted">Loading tasks...</p>
       ) : (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "16px",
-          }}
-        >
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {COLUMNS.map((column) => (
-            <div key={column} style={columnStyle}>
-              <h4 style={{ marginTop: 0 }}>{column}</h4>
+            <div key={column} className="min-h-[300px] rounded-md bg-fog p-3">
+              <h4 className="mb-2 mt-0 font-body text-sm font-semibold text-ink-muted">
+                {ROUTE_LABELS[column]}
+              </h4>
               {visibleTasks
                 .filter((task) => task.status === column)
                 .map((task) => (
@@ -419,76 +431,6 @@ const ProjectBoard = () => {
       )}
     </div>
   );
-};
-
-const addButtonStyle = {
-  padding: "10px 16px",
-  backgroundColor: "#4f46e5",
-  color: "#fff",
-  border: "none",
-  borderRadius: "6px",
-  cursor: "pointer",
-  fontWeight: "bold",
-  whiteSpace: "nowrap",
-};
-
-const columnStyle = {
-  backgroundColor: "#f3f4f6",
-  borderRadius: "8px",
-  padding: "12px",
-  minHeight: "300px",
-};
-
-const badgeStyle = {
-  fontSize: "12px",
-  fontWeight: "600",
-  padding: "3px 10px",
-  borderRadius: "999px",
-};
-
-const tabRowStyle = {
-  display: "flex",
-  gap: "6px",
-  borderBottom: "1px solid #e5e7eb",
-  marginBottom: "16px",
-  flexWrap: "wrap",
-};
-
-const tabButtonStyle = {
-  padding: "10px 16px",
-  border: "none",
-  background: "none",
-  cursor: "pointer",
-  fontSize: "14px",
-  fontWeight: "500",
-  color: "#6b7280",
-  borderBottom: "2px solid transparent",
-};
-
-const tabButtonActiveStyle = {
-  color: "#4f46e5",
-  borderBottom: "2px solid #4f46e5",
-};
-
-const filterBarStyle = {
-  display: "flex",
-  gap: "8px",
-  marginBottom: "16px",
-  flexWrap: "wrap",
-};
-
-const searchInputStyle = {
-  flex: 1,
-  minWidth: "200px",
-  padding: "10px",
-  border: "1px solid #ccc",
-  borderRadius: "6px",
-};
-
-const filterSelectStyle = {
-  padding: "10px",
-  border: "1px solid #ccc",
-  borderRadius: "6px",
 };
 
 export default ProjectBoard;

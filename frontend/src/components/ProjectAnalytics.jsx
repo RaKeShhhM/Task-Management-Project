@@ -12,16 +12,18 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+// Recharts needs raw hex values for fills — Tailwind classes don't apply to SVG
+// fill attributes — so these stay in sync with tailwind.config.js by hand.
 const STATUS_COLORS = {
-  NotStarted: "#9ca3af",
-  InProgress: "#f59e0b",
-  Completed: "#22c55e",
+  NotStarted: "#94A3B8",
+  InProgress: "#F59E0B",
+  Completed: "#16A34A",
 };
 
 const PRIORITY_COLORS = {
-  Low: "#60a5fa",
-  Medium: "#f59e0b",
-  High: "#ef4444",
+  Low: "#3B82F6",
+  Medium: "#F59E0B",
+  High: "#DC2626",
 };
 
 const ProjectAnalytics = ({ projects }) => {
@@ -43,9 +45,9 @@ const ProjectAnalytics = ({ projects }) => {
   if (projects.length === 0) return null;
 
   return (
-    <div style={gridStyle}>
-      <div style={chartCardStyle}>
-        <h4 style={{ marginTop: 0 }}>Projects by Status</h4>
+    <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="rounded-md border border-border bg-surface p-4 font-body shadow-card">
+        <h4 className="mb-2 mt-0">Projects by Status</h4>
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
             <Pie
@@ -67,8 +69,8 @@ const ProjectAnalytics = ({ projects }) => {
         </ResponsiveContainer>
       </div>
 
-      <div style={chartCardStyle}>
-        <h4 style={{ marginTop: 0 }}>Projects by Priority</h4>
+      <div className="rounded-md border border-border bg-surface p-4 font-body shadow-card">
+        <h4 className="mb-2 mt-0">Projects by Priority</h4>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={priorityCounts}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -85,20 +87,6 @@ const ProjectAnalytics = ({ projects }) => {
       </div>
     </div>
   );
-};
-
-const gridStyle = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: "16px",
-  marginBottom: "30px",
-};
-
-const chartCardStyle = {
-  backgroundColor: "#fff",
-  border: "1px solid #e5e7eb",
-  borderRadius: "8px",
-  padding: "16px",
 };
 
 export default ProjectAnalytics;
