@@ -9,6 +9,7 @@ import {
   Cell,
   ResponsiveContainer,
 } from "recharts";
+import { isOverdue } from "../utils/taskHelpers";
 
 const STATUS_COLORS = {
   ToDo: "#9ca3af",
@@ -46,9 +47,9 @@ const MembersOverview = ({ project, tasks }) => {
       <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginBottom: "16px" }}>
         {people.map((person) => {
           // Quick per-person task count just for the chip, so you get a hint before clicking
-          const taskCount = tasks.filter(
-            (t) => t.assignee?._id === person._id
-          ).length;
+          const personTasks = tasks.filter((t) => t.assignee?._id === person._id);
+          const taskCount = personTasks.length;
+          const overdueCount = personTasks.filter(isOverdue).length;
 
           return (
             <button
@@ -62,6 +63,9 @@ const MembersOverview = ({ project, tasks }) => {
               {person.name}
               <span style={roleTagStyle}>{person.roleLabel}</span>
               <span style={countTagStyle}>{taskCount} tasks</span>
+              {overdueCount > 0 && (
+                <span style={overdueTagStyle}>{overdueCount} overdue</span>
+              )}
             </button>
           );
         })}
@@ -75,19 +79,38 @@ const MembersOverview = ({ project, tasks }) => {
           {selectedPersonTasks.length === 0 ? (
             <p style={{ color: "#6b7280" }}>No tasks assigned to this person yet.</p>
           ) : (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis allowDecimals={false} />
-                <Tooltip />
-                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                  {chartData.map((entry) => (
-                    <Cell key={entry.name} fill={STATUS_COLORS[entry.name]} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                    {chartData.map((entry) => (
+                      <Cell key={entry.name} fill={STATUS_COLORS[entry.name]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+
+              {/* List out exactly which tasks are overdue — a chart alone doesn't tell you WHAT missed the deadline */}
+              {selectedPersonTasks.some(isOverdue) && (
+                <div style={{ marginTop: "12px" }}>
+                  <p style={{ fontWeight: "600", color: "#b91c1c", margin: "0 0 6px" }}>
+                    Overdue tasks:
+                  </p>
+                  <ul style={{ margin: 0, paddingLeft: "18px" }}>
+                    {selectedPersonTasks.filter(isOverdue).map((t) => (
+                      <li key={t._id} style={{ color: "#b91c1c", fontSize: "13px" }}>
+                        {t.title} — was due{" "}
+                        {new Date(t.dueDate).toLocaleDateString()}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
           )}
         </>
       ) : (
@@ -135,6 +158,15 @@ const countTagStyle = {
   fontSize: "11px",
   fontWeight: "400",
   color: "#4f46e5",
+};
+
+const overdueTagStyle = {
+  fontSize: "11px",
+  fontWeight: "700",
+  color: "#fff",
+  backgroundColor: "#dc2626",
+  padding: "1px 6px",
+  borderRadius: "4px",
 };
 
 export default MembersOverview;

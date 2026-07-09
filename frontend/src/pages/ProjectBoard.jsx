@@ -38,6 +38,7 @@ const ProjectBoard = () => {
   const [activeTab, setActiveTab] = useState("Add Task");
   const [title, setTitle] = useState("");
   const [assignee, setAssignee] = useState(""); // selected user id for new task
+  const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -127,9 +128,11 @@ const ProjectBoard = () => {
         title,
         projectId,
         assignee: assignee || null, // "" means "leave unassigned"
+        dueDate: dueDate || null,
       });
       setTitle("");
       setAssignee("");
+      setDueDate("");
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create task");
     }
@@ -267,6 +270,17 @@ const ProjectBoard = () => {
                 </option>
               ))}
             </select>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              style={{
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "6px",
+              }}
+              title="Due date (optional)"
+            />
             <button type="submit" style={addButtonStyle}>
               + Add Task
             </button>

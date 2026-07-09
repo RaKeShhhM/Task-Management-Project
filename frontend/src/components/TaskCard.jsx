@@ -1,3 +1,5 @@
+import { isOverdue } from "../utils/taskHelpers";
+
 // Defines the Kanban column order — used to figure out "next" and "previous" status
 const STATUS_ORDER = ["ToDo", "InProgress", "Done"];
 
@@ -12,6 +14,7 @@ const TaskCard = ({
   const currentIndex = STATUS_ORDER.indexOf(task.status);
   const canMoveLeft = currentIndex > 0;
   const canMoveRight = currentIndex < STATUS_ORDER.length - 1;
+  const overdue = isOverdue(task);
 
   // Only the task's owner can delete it (matches backend rule)
   const isOwner = task.owner?._id === currentUserId;
@@ -21,11 +24,27 @@ const TaskCard = ({
   const canReassign = isOwner || isAssignee;
 
   return (
-    <div style={cardStyle}>
-      <p style={{ margin: 0, fontWeight: "600" }}>{task.title}</p>
+    <div style={{ ...cardStyle, ...(overdue ? overdueCardStyle : {}) }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <p style={{ margin: 0, fontWeight: "600" }}>{task.title}</p>
+        {overdue && <span style={overdueBadgeStyle}>OVERDUE</span>}
+      </div>
       {task.description && (
         <p style={{ margin: "6px 0", color: "#6b7280", fontSize: "14px" }}>
           {task.description}
+        </p>
+      )}
+
+      {task.dueDate && (
+        <p
+          style={{
+            margin: "4px 0",
+            fontSize: "12px",
+            color: overdue ? "#b91c1c" : "#9ca3af",
+            fontWeight: overdue ? "600" : "400",
+          }}
+        >
+          Due: {new Date(task.dueDate).toLocaleDateString()}
         </p>
       )}
 
@@ -86,6 +105,22 @@ const assigneeSelectStyle = {
   borderRadius: "4px",
   marginBottom: "6px",
   boxSizing: "border-box",
+};
+
+const overdueCardStyle = {
+  borderColor: "#fca5a5",
+  backgroundColor: "#fef2f2",
+};
+
+const overdueBadgeStyle = {
+  fontSize: "10px",
+  fontWeight: "700",
+  color: "#fff",
+  backgroundColor: "#dc2626",
+  padding: "2px 6px",
+  borderRadius: "4px",
+  whiteSpace: "nowrap",
+  flexShrink: 0,
 };
 
 const cardStyle = {
