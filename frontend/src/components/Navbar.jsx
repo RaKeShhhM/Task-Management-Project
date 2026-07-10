@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+import Avatar from "./Avatar";
 
 // SVG fill values can't read Tailwind classes, so these stay as raw hex —
 // they're kept in sync with tailwind.config.js's status.* colors by hand.
@@ -19,6 +21,7 @@ const RouteMark = () => (
 
 const Navbar = () => {
   const { user, logout } = useAuth();
+  const { darkMode, toggleTheme } = useTheme();
 
   return (
     <nav className="sticky top-0 z-10 flex items-center justify-between bg-navy px-4 py-3 sm:px-7">
@@ -30,8 +33,17 @@ const Navbar = () => {
       </Link>
 
       <div className="flex items-center gap-3 sm:gap-[18px]">
+        <button
+          onClick={toggleTheme}
+          aria-label="Toggle dark mode"
+          className="rounded-md border border-white/25 px-2.5 py-1.5 text-sm text-white/85 hover:bg-white/10"
+        >
+          {darkMode ? "☀️" : "🌙"}
+        </button>
+
         {user ? (
           <>
+            <Avatar name={user.name} size="sm" />
             {/* Name hidden on very small screens to save space — logout stays reachable */}
             <span className="hidden font-body text-sm text-white/75 sm:inline">
               {user.name}

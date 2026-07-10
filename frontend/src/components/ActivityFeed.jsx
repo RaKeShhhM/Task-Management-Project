@@ -46,23 +46,23 @@ const ActivityFeed = ({ projectId }) => {
     return () => socket.off("activityLogged", onActivityLogged);
   }, [projectId]);
 
-  if (loading) return <p className="text-sm text-ink-muted">Loading activity...</p>;
+  if (loading) return <p className="text-sm text-ink-muted dark:text-slate-400">Loading activity...</p>;
 
   if (logs.length === 0) {
-    return <p className="text-sm text-ink-muted">No activity yet.</p>;
+    return <p className="text-sm text-ink-muted dark:text-slate-400">No activity yet.</p>;
   }
 
   return (
-    <div className="max-h-[400px] overflow-y-auto rounded-md border border-border bg-surface px-4 py-3">
+    <div className="max-h-[400px] overflow-y-auto rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 px-4 py-3">
       {logs.map((log) => (
         <div
           key={log._id}
           className="flex items-center justify-between gap-2 border-b border-fog py-2"
         >
-          <p className="m-0 font-body text-[13px]">
+          <p className="m-0 font-body text-[13px] dark:text-slate-300">
             <strong>{log.user?.name}</strong> {log.message}
           </p>
-          <span className="shrink-0 font-mono text-[11px] text-ink-faint">
+          <span className="shrink-0 font-mono text-[11px] text-ink-faint dark:text-slate-500">
             {timeAgo(log.createdAt)}
           </span>
         </div>

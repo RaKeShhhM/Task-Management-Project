@@ -2,9 +2,9 @@ import { isOverdue } from "../utils/taskHelpers";
 import TaskComments from "./TaskComments";
 
 const PRIORITY_STYLES = {
-  Low: "bg-priority-low-soft text-blue-800",
-  Medium: "bg-priority-medium-soft text-amber-800",
-  High: "bg-priority-high-soft text-red-800",
+  Low: "bg-priority-low-soft text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  Medium: "bg-priority-medium-soft text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  High: "bg-priority-high-soft text-red-800 dark:bg-red-900/40 dark:text-red-300",
 };
 
 // Defines the Kanban column order — used to figure out "next" and "previous" status
@@ -33,13 +33,13 @@ const TaskCard = ({
   return (
     <div
       className={`mb-2.5 rounded-md border p-3 shadow-card ${
-        overdue ? "border-red-300 bg-danger-soft" : "border-border bg-surface"
+        overdue ? "border-red-300 dark:border-red-800 bg-danger-soft dark:bg-red-950/40" : "border-border dark:border-slate-700 bg-surface dark:bg-slate-900"
       }`}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="m-0 font-body text-sm font-semibold">{task.title}</p>
+        <p className="m-0 font-body text-sm font-semibold dark:text-slate-300">{task.title}</p>
         {overdue && (
-          <span className="shrink-0 whitespace-nowrap rounded bg-danger px-1.5 py-0.5 font-body text-[10px] font-bold text-white">
+          <span className="shrink-0 whitespace-nowrap rounded bg-danger px-1.5 py-0.5 font-body text-[10px] font-bold text-white dark:text-slate-300">
             OVERDUE
           </span>
         )}
@@ -52,13 +52,13 @@ const TaskCard = ({
       </span>
 
       {task.description && (
-        <p className="my-1.5 font-body text-sm text-ink-muted">{task.description}</p>
+        <p className="my-1.5 font-body text-sm text-ink-muted dark:text-slate-300">{task.description}</p>
       )}
 
       {task.dueDate && (
         <p
           className={`my-1 font-mono text-xs ${
-            overdue ? "font-semibold text-danger" : "text-ink-faint"
+            overdue ? "font-semibold text-danger" : "text-ink-faint dark:text-slate-500"
           }`}
         >
           Due: {new Date(task.dueDate).toLocaleDateString()}
@@ -69,7 +69,7 @@ const TaskCard = ({
         <select
           value={task.assignee?._id || ""}
           onChange={(e) => onReassign(task._id, e.target.value)}
-          className="mb-1.5 w-full rounded border border-border px-1.5 py-1 font-body text-xs"
+          className="mb-1.5 w-full rounded border border-border dark:border-slate-700 px-1.5 py-1 font-body text-xs"
         >
           <option value="">Unassigned</option>
           {assignableUsers.map((person) => (
@@ -79,7 +79,7 @@ const TaskCard = ({
           ))}
         </select>
       ) : (
-        <p className="my-1.5 font-body text-xs text-ink-faint">
+        <p className="my-1.5 font-body text-xs text-ink-faint dark:text-slate-500">
           Assignee: {task.assignee?.name || "Unassigned"}
         </p>
       )}
@@ -88,7 +88,7 @@ const TaskCard = ({
         {canMoveLeft && (
           <button
             onClick={() => onMove(task._id, STATUS_ORDER[currentIndex - 1])}
-            className="rounded border border-border bg-fog px-2 py-1 font-body text-xs"
+            className="rounded border border-border dark:border-slate-700 bg-fog dark:text-slate-300 dark:bg-slate-950 px-2 py-1 font-body text-xs"
           >
             ← Move
           </button>
@@ -96,7 +96,7 @@ const TaskCard = ({
         {canMoveRight && (
           <button
             onClick={() => onMove(task._id, STATUS_ORDER[currentIndex + 1])}
-            className="rounded border border-border bg-fog px-2 py-1 font-body text-xs"
+            className="rounded border border-border dark:border-slate-700 bg-fog dark:bg-slate-950 px-2 py-1 font-body text-xs dark:text-slate-300"
           >
             Move →
           </button>
@@ -104,7 +104,7 @@ const TaskCard = ({
         {isOwner && (
           <button
             onClick={() => onDelete(task._id)}
-            className="rounded bg-danger-soft px-2 py-1 font-body text-xs text-danger"
+            className="rounded bg-danger-soft dark:bg-red-900/40 px-2 py-1 font-body text-xs text-danger dark:text-red-300"
           >
             Delete
           </button>

@@ -28,7 +28,7 @@ const TaskAnalytics = ({ tasks }) => {
 
   if (tasks.length === 0) {
     return (
-      <p className="mb-5 text-sm text-ink-muted">
+      <p className="mb-5 text-sm text-ink-muted dark:text-slate-400">
         No tasks yet — add one above to see analytics here.
       </p>
     );
@@ -36,7 +36,7 @@ const TaskAnalytics = ({ tasks }) => {
 
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <div className="rounded-md border border-border bg-surface p-4 shadow-card">
+      <div className="rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 p-4 shadow-card">
         <h4 className="mb-2 mt-0">Tasks by Status</h4>
         <ResponsiveContainer width="100%" height={200}>
           <PieChart>
@@ -59,7 +59,7 @@ const TaskAnalytics = ({ tasks }) => {
         </ResponsiveContainer>
       </div>
 
-      <div className="rounded-md border border-border bg-surface p-4 shadow-card">
+      <div className="rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 p-4 shadow-card">
         <h4 className="mb-2 mt-0">Tasks by Priority</h4>
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={priorityCounts}>

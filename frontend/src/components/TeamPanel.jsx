@@ -19,20 +19,20 @@ const TeamPanel = ({ project, currentUserId, canManage, onAdd, onRoleChange, onR
   };
 
   return (
-    <div className="rounded-md border border-border bg-fog p-4">
-      <h4 className="mt-0">Team</h4>
+    <div className="rounded-md border border-border dark:border-slate-700 bg-fog dark:bg-slate-950 p-4">
+      <h4 className="mt-0 dark:text-white">Team</h4>
 
       {/* Owner is always shown, always in charge, never removable */}
-      <div className="flex items-center justify-between border-b border-border py-1.5">
+      <div className="flex items-center justify-between border-b border-border dark:border-slate-700 py-1.5 dark:text-slate-300">
         <span className="text-sm">
-          {project.owner?.name} <em className="text-ink-muted">(owner)</em>
+          {project.owner?.name} <em className="text-ink-muted dark:text-slate-400">(owner)</em>
         </span>
       </div>
 
       {project.members?.map((m) => (
         <div
           key={m.user._id}
-          className="flex flex-wrap items-center justify-between gap-2 border-b border-border py-1.5"
+          className="flex flex-wrap items-center justify-between gap-2 border-b border-border dark:border-slate-700 py-1.5 dark:text-slate-300"
         >
           <span className="text-sm">{m.user.name}</span>
           {canManage ? (
@@ -40,20 +40,20 @@ const TeamPanel = ({ project, currentUserId, canManage, onAdd, onRoleChange, onR
               <select
                 value={m.role}
                 onChange={(e) => onRoleChange(m.user._id, e.target.value)}
-                className="rounded-md border border-border p-1.5 text-sm"
+                className="rounded-md border border-border dark:border-slate-700 p-1.5 text-sm"
               >
                 <option value="member">member</option>
                 <option value="admin">admin</option>
               </select>
               <button
                 onClick={() => onRemove(m.user._id)}
-                className="rounded bg-danger-soft px-2.5 py-1 text-xs text-danger"
+                className="rounded bg-danger-soft dark:bg-red-900/40 px-2.5 py-1 text-xs text-danger dark:text-red-300"
               >
                 Remove
               </button>
             </div>
           ) : (
-            <span className="text-[13px] text-ink-muted">{m.role}</span>
+            <span className="text-[13px] text-ink-muted dark:text-slate-400">{m.role}</span>
           )}
         </div>
       ))}
@@ -65,13 +65,13 @@ const TeamPanel = ({ project, currentUserId, canManage, onAdd, onRoleChange, onR
             placeholder="Member's email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mb-2 block w-full rounded-md border border-border px-2 py-2 text-sm"
+            className="mb-2 block w-full rounded-md border border-border dark:border-slate-700 px-2 py-2 text-sm"
           />
           <div className="flex flex-wrap gap-1.5">
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="rounded-md border border-border p-1.5 text-sm"
+              className="rounded-md border border-border dark:border-slate-700 p-1.5 text-sm"
             >
               <option value="member">member</option>
               <option value="admin">admin</option>
