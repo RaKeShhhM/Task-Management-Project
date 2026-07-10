@@ -37,8 +37,8 @@ const TaskAnalytics = ({ tasks }) => {
   return (
     <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 p-4 shadow-card">
-        <h4 className="mb-2 mt-0">Tasks by Status</h4>
-        <ResponsiveContainer width="100%" height={200}>
+        <h4 className="mb-2 mt-0 dark:bg-slate-900 dark:text-slate-300">Tasks by Status</h4>
+        <ResponsiveContainer width="100%" height={250}>
           <PieChart>
             <Pie
               data={statusCounts}
@@ -60,8 +60,8 @@ const TaskAnalytics = ({ tasks }) => {
       </div>
 
       <div className="rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 p-4 shadow-card">
-        <h4 className="mb-2 mt-0">Tasks by Priority</h4>
-        <ResponsiveContainer width="100%" height={200}>
+        <h4 className="mb-2 mt-0 dark:bg-slate-900 dark:text-slate-300">Tasks by Priority</h4>
+        <ResponsiveContainer width="100%" height={250}>
           <BarChart data={priorityCounts}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />

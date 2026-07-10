@@ -47,7 +47,7 @@ const ProjectAnalytics = ({ projects }) => {
   return (
     <div className="mb-7 grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 p-4 font-body shadow-card">
-        <h4 className="mb-2 mt-0">Projects by Status</h4>
+        <h4 className="mb-2 mt-0 dark:text-slate-300">Projects by Status</h4>
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
             <Pie
@@ -70,7 +70,7 @@ const ProjectAnalytics = ({ projects }) => {
       </div>
 
       <div className="rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 p-4 font-body shadow-card">
-        <h4 className="mb-2 mt-0">Projects by Priority</h4>
+        <h4 className="mb-2 mt-0 dark:text-slate-300">Projects by Priority</h4>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={priorityCounts}>
             <CartesianGrid strokeDasharray="3 3" />

@@ -10,7 +10,10 @@ const generateTokenAndSetCookie = (res, userId) => {
   res.cookie("token", token, {
     httpOnly: true, // JS on the client can't access this cookie — blocks XSS token theft
     secure: process.env.NODE_ENV === "production", // HTTPS only in production
-    sameSite: "strict", // helps prevent CSRF
+    // "none" is required when frontend/backend live on different domains (e.g. two
+    // separate Render services) — the browser won't send "strict"/"lax" cookies
+    // cross-site at all. "none" requires secure:true, which we already set above.
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in ms
   });
 
@@ -82,7 +85,12 @@ const getProfile = async (req, res) => {
 // @route   POST /api/users/logout
 // @access  Private
 const logoutUser = (req, res) => {
-  res.cookie("token", "", { httpOnly: true, expires: new Date(0) });
+  res.cookie("token", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    expires: new Date(0),
+  });
   res.status(200).json({ message: "Logged out successfully" });
 };
 
