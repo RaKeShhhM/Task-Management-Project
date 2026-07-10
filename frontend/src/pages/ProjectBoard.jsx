@@ -13,15 +13,15 @@ const COLUMNS = ["ToDo", "InProgress", "Done"];
 const TABS = ["Add Task", "Add Members", "Members", "Activity"];
 
 const STATUS_STYLES = {
-  NotStarted: "bg-status-todo-soft text-ink-muted",
-  InProgress: "bg-status-progress-soft text-amber-800",
-  Completed: "bg-status-done-soft text-green-800",
+  NotStarted: "bg-status-todo-soft dark:bg-slate-800 text-ink-muted dark:text-slate-300",
+  InProgress: "bg-status-progress-soft text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  Completed: "bg-status-done-soft text-green-800 dark:bg-green-900/40 dark:text-green-300",
 };
 
 const PRIORITY_STYLES = {
-  Low: "bg-priority-low-soft text-blue-800",
-  Medium: "bg-priority-medium-soft text-amber-800",
-  High: "bg-priority-high-soft text-red-800",
+  Low: "bg-priority-low-soft text-blue-800 dark:bg-blue-900/40 dark:text-blue-300",
+  Medium: "bg-priority-medium-soft text-amber-800 dark:bg-amber-900/40 dark:text-amber-300",
+  High: "bg-priority-high-soft text-red-800 dark:bg-red-900/40 dark:text-red-300",
 };
 
 const STATUS_LABELS = {
@@ -240,7 +240,7 @@ const ProjectBoard = () => {
       {project && (
         <div className="my-3">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h2 className="font-heading text-xl sm:text-2xl">{project.title}</h2>
+            <h2 className="font-heading text-xl sm:text-2xl  dark:text-slate-100">{project.title}</h2>
             <span
               className={`rounded-full px-2.5 py-1 font-body text-xs font-semibold ${STATUS_STYLES[project.status]}`}
             >
@@ -253,13 +253,13 @@ const ProjectBoard = () => {
             </span>
           </div>
           {project.description && (
-            <p className="mt-1.5 text-sm text-ink-muted">{project.description}</p>
+            <p className="mt-1.5 text-sm text-ink-muted dark:text-slate-400">{project.description}</p>
           )}
         </div>
       )}
 
       {/* Tab navigation — scrolls horizontally on narrow screens */}
-      <div className="mb-4 flex gap-1.5 overflow-x-auto border-b border-border">
+      <div className="mb-4 flex gap-1.5 overflow-x-auto border-b border-border dark:border-slate-700">
         {TABS.map((tab) => (
           <button
             key={tab}
@@ -267,7 +267,7 @@ const ProjectBoard = () => {
             className={`whitespace-nowrap border-b-2 px-3 py-2.5 font-body text-sm font-medium ${
               activeTab === tab
                 ? "border-teal text-teal"
-                : "border-transparent text-ink-muted"
+                : "border-transparent text-ink-muted dark:text-slate-400"
             }`}
           >
             {tab}
@@ -284,12 +284,12 @@ const ProjectBoard = () => {
               placeholder="New task title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="min-w-[160px] flex-1 rounded-md border border-border px-3 py-2.5 font-body text-sm"
+              className="min-w-[160px] flex-1 rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
             />
             <select
               value={assignee}
               onChange={(e) => setAssignee(e.target.value)}
-              className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
+              className="rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
             >
               <option value="">Unassigned</option>
               {assignableUsers.map((person) => (
@@ -301,7 +301,7 @@ const ProjectBoard = () => {
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}
-              className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
+              className="rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
             >
               <option value="Low">Low priority</option>
               <option value="Medium">Medium priority</option>
@@ -312,7 +312,7 @@ const ProjectBoard = () => {
               value={dueDate}
               onChange={(e) => setDueDate(e.target.value)}
               title="Due date (optional)"
-              className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
+              className="rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
             />
             <button
               type="submit"
@@ -353,12 +353,12 @@ const ProjectBoard = () => {
           placeholder="🔍 Search tasks by title..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="min-w-[200px] flex-1 rounded-md border border-border px-3 py-2.5 font-body text-sm"
+          className="min-w-[200px] flex-1 rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
         />
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
+          className="rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
         >
           <option value="all">All statuses</option>
           <option value="ToDo">ToDo</option>
@@ -368,7 +368,7 @@ const ProjectBoard = () => {
         <select
           value={filterAssignee}
           onChange={(e) => setFilterAssignee(e.target.value)}
-          className="rounded-md border border-border px-3 py-2.5 font-body text-sm"
+          className="rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
         >
           <option value="all">All assignees</option>
           <option value="unassigned">Unassigned</option>
@@ -382,7 +382,7 @@ const ProjectBoard = () => {
 
       {/* Route-line header: the signature "journey" strip showing task counts
           per stage, connected by a line — echoes the Navbar logomark */}
-      <div className="relative mb-4 flex items-start justify-between rounded-md border border-border bg-surface px-6 py-4 shadow-card">
+      <div className="relative mb-4 flex items-start justify-between rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 px-6 py-4 shadow-card">
         <div className="pointer-events-none absolute left-10 right-10 top-[26px] h-px bg-border" />
         {COLUMNS.map((column) => {
           const count = visibleTasks.filter((t) => t.status === column).length;
@@ -392,24 +392,24 @@ const ProjectBoard = () => {
                 className="h-3 w-3 rounded-full ring-4 ring-surface"
                 style={{ backgroundColor: ROUTE_DOT_COLORS[column] }}
               />
-              <span className="font-body text-xs font-medium text-ink-muted">
+              <span className="font-body text-xs font-medium text-ink-muted dark:text-slate-400">
                 {ROUTE_LABELS[column]}
               </span>
-              <span className="font-mono text-sm font-semibold text-ink">{count}</span>
+              <span className="font-mono text-sm font-semibold text-ink dark:text-slate-100">{count}</span>
             </div>
           );
         })}
       </div>
 
       {/* Kanban board — stacks to 1 column on mobile, 3 side-by-side from sm: up */}
-      <h3 className="mb-3 text-lg">Board</h3>
+      <h3 className="mb-3 text-lg dark:text-slate-300">Board</h3>
       {loading ? (
-        <p className="text-sm text-ink-muted">Loading tasks...</p>
+        <p className="text-sm text-ink-muted dark:text-slate-400">Loading tasks...</p>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {COLUMNS.map((column) => (
-            <div key={column} className="min-h-[300px] rounded-md bg-fog p-3">
-              <h4 className="mb-2 mt-0 font-body text-sm font-semibold text-ink-muted">
+            <div key={column} className="min-h-[300px] rounded-md bg-fog dark:bg-slate-950 p-3">
+              <h4 className="mb-2 mt-0 font-body text-sm font-semibold text-ink-muted dark:text-slate-400">
                 {ROUTE_LABELS[column]}
               </h4>
               {visibleTasks

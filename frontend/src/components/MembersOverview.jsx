@@ -38,10 +38,10 @@ const MembersOverview = ({ project, tasks }) => {
   }));
 
   return (
-    <div className="rounded-md border border-border bg-surface p-4 shadow-card">
-      <h4 className="mt-0">Team Members</h4>
+    <div className="rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 p-4 shadow-card">
+      <h4 className="mt-0 dark:text-slate-300">Team Members</h4>
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 flex flex-wrap gap-2 dark:text-slate-300">
         {people.map((person) => {
           // Quick per-person task count just for the chip, so you get a hint before clicking
           const personTasks = tasks.filter((t) => t.assignee?._id === person._id);
@@ -55,12 +55,12 @@ const MembersOverview = ({ project, tasks }) => {
               onClick={() => setSelectedUserId(person._id)}
               className={`flex flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-[13px] font-semibold ${
                 isActive
-                  ? "border-teal bg-teal-soft"
-                  : "border-border bg-fog"
+                  ? "border-teal bg-teal-soft dark:bg-teal-900/40"
+                  : "border-border dark:border-slate-700 bg-fog dark:bg-slate-950"
               }`}
             >
               {person.name}
-              <span className="font-normal text-ink-muted">{person.roleLabel}</span>
+              <span className="font-normal text-ink-muted dark:text-slate-400">{person.roleLabel}</span>
               <span className="font-normal text-teal">{taskCount} tasks</span>
               {overdueCount > 0 && (
                 <span className="rounded bg-danger px-1.5 py-0.5 text-[11px] font-bold text-white">
@@ -74,9 +74,9 @@ const MembersOverview = ({ project, tasks }) => {
 
       {selectedPerson ? (
         <>
-          <h5 className="mb-2 mt-0">{selectedPerson.name}'s task breakdown</h5>
+          <h5 className="mb-2 mt-0 dark:text-slate-300">{selectedPerson.name}'s task breakdown</h5>
           {selectedPersonTasks.length === 0 ? (
-            <p className="text-sm text-ink-muted">No tasks assigned to this person yet.</p>
+            <p className="text-sm text-ink-muted dark:text-slate-400">No tasks assigned to this person yet.</p>
           ) : (
             <>
               <ResponsiveContainer width="100%" height={200}>
@@ -111,7 +111,7 @@ const MembersOverview = ({ project, tasks }) => {
           )}
         </>
       ) : (
-        <p className="text-sm text-ink-muted">
+        <p className="text-sm text-ink-muted dark:text-slate-400">
           Click a team member above to see their task breakdown.
         </p>
       )}

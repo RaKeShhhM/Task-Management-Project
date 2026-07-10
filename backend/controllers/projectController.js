@@ -2,25 +2,27 @@ const Project = require("../models/Project");
 const Task = require("../models/Task");
 const User = require("../models/User");
 
-// Computes a project's real-world status FROM its tasks, rather than trusting
-// a manually-set label that could go stale. This keeps the dashboard honest:
+// Computes a project's real-world status AND completion percentage FROM its
+// tasks, rather than trusting a manually-set label that could go stale.
 // - "NotStarted": no tasks yet, or all tasks are still sitting in ToDo
 // - "Completed": has at least one task, and every task is Done
 // - "InProgress": anything in between
-const computeProjectStatus = async (projectId) => {
+const computeProjectStats = async (projectId) => {
   const total = await Task.countDocuments({ project: projectId });
-  if (total === 0) return "NotStarted";
+  if (total === 0) return { status: "NotStarted", percentComplete: 0 };
 
   const done = await Task.countDocuments({ project: projectId, status: "Done" });
-  if (done === total) return "Completed";
+  const percentComplete = Math.round((done / total) * 100);
+
+  if (done === total) return { status: "Completed", percentComplete };
 
   const notStarted = await Task.countDocuments({
     project: projectId,
     status: "ToDo",
   });
-  if (notStarted === total) return "NotStarted";
+  if (notStarted === total) return { status: "NotStarted", percentComplete };
 
-  return "InProgress";
+  return { status: "InProgress", percentComplete };
 };
 
 // @route   GET /api/projects
@@ -33,12 +35,12 @@ const getProjects = async (req, res) => {
       .populate("owner", "name email")
       .populate("members.user", "name email");
 
-    // Attach a computed `status` to each project based on its tasks.
-    // .toObject() so we can add a plain field onto what Mongoose returns.
+    // Attach computed `status` + `percentComplete` to each project based on its tasks.
+    // .toObject() so we can add plain fields onto what Mongoose returns.
     const withStatus = await Promise.all(
       projects.map(async (project) => {
-        const status = await computeProjectStatus(project._id);
-        return { ...project.toObject(), status };
+        const stats = await computeProjectStats(project._id);
+        return { ...project.toObject(), ...stats };
       })
     );
 
@@ -156,8 +158,8 @@ const getProjectById = async (req, res) => {
       return res.status(403).json({ message: "Not authorized" });
     }
 
-    const status = await computeProjectStatus(project._id);
-    res.status(200).json({ ...project.toObject(), status });
+    const stats = await computeProjectStats(project._id);
+    res.status(200).json({ ...project.toObject(), ...stats });
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

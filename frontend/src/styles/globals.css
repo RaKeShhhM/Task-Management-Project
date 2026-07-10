@@ -53,3 +53,29 @@ select:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Fade + slide up — used for project cards and tab content appearing */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-slide-up {
+  animation: fadeSlideUp 0.35s ease-out both;
+}
+
+/* Skeleton loading shimmer */
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-skeleton {
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}

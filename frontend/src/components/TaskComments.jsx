@@ -82,14 +82,14 @@ const TaskComments = ({ taskId, currentUserId }) => {
       </button>
 
       {open && (
-        <div className="mt-1.5 rounded-md bg-fog p-2">
+        <div className="mt-1.5 rounded-md bg-fog dark:bg-slate-950 p-2">
           {loading ? (
-            <p className="text-xs text-ink-faint">Loading...</p>
+            <p className="text-xs text-ink-faint dark:text-slate-300 ">Loading...</p>
           ) : comments.length === 0 ? (
-            <p className="text-xs text-ink-faint">No comments yet.</p>
+            <p className="text-xs text-ink-faint dark:text-slate-400">No comments yet.</p>
           ) : (
             comments.map((c) => (
-              <div key={c._id} className="mb-1 flex items-center justify-between gap-2">
+              <div key={c._id} className="mb-1 flex items-center justify-between gap-2 dark:text-slate-300">
                 <p className="m-0 text-xs">
                   <strong>{c.author?.name}</strong>: {c.text}
                 </p>
@@ -111,7 +111,7 @@ const TaskComments = ({ taskId, currentUserId }) => {
               placeholder="Write a comment..."
               value={text}
               onChange={(e) => setText(e.target.value)}
-              className="flex-1 rounded border border-border px-1.5 py-1.5 text-xs"
+              className="flex-1 rounded border border-border dark:border-slate-700 px-1.5 py-1.5 text-xs"
             />
             <button
               type="submit"
