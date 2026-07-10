@@ -2,6 +2,10 @@
 
 A full-stack, real-time collaborative task management application built with the MERN stack. Teams can create projects, assign tasks, track progress with live Kanban boards, and stay in sync through instant updates, comments, and an activity feed — no page refreshes needed.
 
+## 🌐 Live Demo
+
+👉 **Live Website:** https://teamboard-frontend.onrender.com
+
 ---
 
 ## ✨ Features
