@@ -48,6 +48,8 @@ const ProjectBoard = () => {
   const [dueDate, setDueDate] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [titleTouched, setTitleTouched] = useState(false);
 
   // Search & filter state for the Kanban board
   const [searchQuery, setSearchQuery] = useState("");
@@ -131,8 +133,14 @@ const ProjectBoard = () => {
 
   const handleCreateTask = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    setError("");
+    if (!title.trim()) {
+      setError("Task title is required");
+      setTitleTouched(true);
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       // No manual fetchTasks() here — the "taskCreated" socket event
       // (which we also receive, since we're in the room) updates state instead
@@ -147,8 +155,11 @@ const ProjectBoard = () => {
       setAssignee("");
       setPriority("Medium");
       setDueDate("");
+      setTitleTouched(false);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create task");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -283,8 +294,19 @@ const ProjectBoard = () => {
               type="text"
               placeholder="New task title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="min-w-[160px] flex-1 rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (e.target.value.trim()) {
+                  setError("");
+                }
+              }}
+              onBlur={() => setTitleTouched(true)}
+              required
+              className={`min-w-[160px] flex-1 rounded-md border px-3 py-2.5 font-body text-sm transition-all duration-200 focus:outline-none focus:ring-1 ${
+                titleTouched && !title.trim()
+                  ? "border-danger focus:border-danger focus:ring-danger focus-visible:outline-danger"
+                  : "border-border dark:border-slate-700 focus:border-teal focus:ring-teal"
+              }`}
             />
             <select
               value={assignee}
@@ -316,9 +338,10 @@ const ProjectBoard = () => {
             />
             <button
               type="submit"
-              className="whitespace-nowrap rounded-md bg-teal px-4 py-2.5 font-body text-sm font-semibold text-white hover:bg-teal-dark"
+              disabled={isSubmitting || !title.trim()}
+              className="whitespace-nowrap rounded-md bg-teal px-4 py-2.5 font-body text-sm font-semibold text-white hover:bg-teal-dark transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              + Add Task
+              {isSubmitting ? "Adding..." : "+ Add Task"}
             </button>
           </form>
         )}

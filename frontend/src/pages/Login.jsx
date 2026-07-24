@@ -6,18 +6,105 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const { login } = useAuth();
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [touched, setTouched] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const validateField = (fieldName, val) => {
+    let errorMsg = "";
+    if (fieldName === "email") {
+      if (!val.trim()) {
+        errorMsg = "Email is required";
+      } else if (!/\S+@\S+\.\S+/.test(val)) {
+        errorMsg = "Please enter a valid email address";
+      }
+    } else if (fieldName === "password") {
+      if (!val) {
+        errorMsg = "Password is required";
+      }
+    }
+    return errorMsg;
+  };
+
+  const handleBlur = (fieldName, val) => {
+    setTouched((prev) => ({ ...prev, [fieldName]: true }));
+    setFieldErrors((prev) => ({ ...prev, [fieldName]: validateField(fieldName, val) }));
+  };
+
+  const handleEmailChange = (e) => {
+    const val = e.target.value;
+    setEmail(val);
+    if (touched.email) {
+      setFieldErrors((prev) => ({ ...prev, email: validateField("email", val) }));
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    const val = e.target.value;
+    setPassword(val);
+    if (touched.password) {
+      setFieldErrors((prev) => ({ ...prev, password: validateField("password", val) }));
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Validate fields
+    const emailErr = validateField("email", email);
+    const passwordErr = validateField("password", password);
+
+    if (emailErr || passwordErr) {
+      setFieldErrors({ email: emailErr, password: passwordErr });
+      setTouched({ email: true, password: true });
+      return;
+    }
+
+    setFieldErrors({});
+    setIsSubmitting(true);
     try {
       await login(email, password);
       navigate("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.message || "Login failed");
+      const serverError = err.response?.data;
+      if (serverError?.errors) {
+        const newFieldErrors = {};
+        serverError.errors.forEach((e) => {
+          newFieldErrors[e.field] = e.message;
+        });
+        setFieldErrors(newFieldErrors);
+      } else if (serverError?.message) {
+        const msg = serverError.message;
+        if (msg.toLowerCase().includes("email") || msg.toLowerCase().includes("user")) {
+          setFieldErrors({ email: msg });
+          setTouched((prev) => ({ ...prev, email: true }));
+        } else if (msg.toLowerCase().includes("password")) {
+          setFieldErrors({ password: msg });
+          setTouched((prev) => ({ ...prev, password: true }));
+        } else {
+          setError(msg);
+        }
+      } else {
+        setError("Login failed");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
+  };
+
+  const hasErrors = Object.values(fieldErrors).some(Boolean);
+
+  const getInputClass = (fieldName) => {
+    const isInvalid = touched[fieldName] && fieldErrors[fieldName];
+    return `block w-full rounded-md border px-3 py-2.5 font-body text-sm transition-all duration-200 focus:outline-none focus:ring-1 ${
+      isInvalid
+        ? "border-danger focus:border-danger focus:ring-danger focus-visible:outline-danger"
+        : "border-border dark:border-slate-700 focus:border-teal focus:ring-teal"
+    }`;
   };
 
   return (
@@ -25,30 +112,49 @@ const Login = () => {
       <div className="rounded-md border border-border dark:border-slate-700 bg-surface dark:bg-slate-900 p-6 shadow-card sm:p-8">
         <h2 className="mb-5 font-heading text-xl">Login</h2>
 
-        {error && <p className="mb-2.5 text-sm text-danger">{error}</p>}
+        {error && (
+          <p className="mb-2.5 text-sm text-danger animate-fade-slide-up">{error}</p>
+        )}
 
         <form onSubmit={handleSubmit}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="mb-3 block w-full rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="mb-3 block w-full rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
-          />
+          <div className="mb-3">
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={handleEmailChange}
+              onBlur={() => handleBlur("email", email)}
+              required
+              className={getInputClass("email")}
+            />
+            {touched.email && fieldErrors.email && (
+              <p className="mt-1 text-xs text-danger font-medium animate-fade-slide-up">
+                {fieldErrors.email}
+              </p>
+            )}
+          </div>
+          <div className="mb-4">
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={handlePasswordChange}
+              onBlur={() => handleBlur("password", password)}
+              required
+              className={getInputClass("password")}
+            />
+            {touched.password && fieldErrors.password && (
+              <p className="mt-1 text-xs text-danger font-medium animate-fade-slide-up">
+                {fieldErrors.password}
+              </p>
+            )}
+          </div>
           <button
             type="submit"
-            className="w-full rounded-md bg-teal py-2.5 font-body font-semibold text-white hover:bg-teal-dark"
+            disabled={isSubmitting || hasErrors}
+            className="w-full rounded-md bg-teal py-2.5 font-body font-semibold text-white hover:bg-teal-dark transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Login
+            {isSubmitting ? "Logging in..." : "Login"}
           </button>
         </form>
 

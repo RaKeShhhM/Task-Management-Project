@@ -68,6 +68,8 @@ const Dashboard = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [titleTouched, setTitleTouched] = useState(false);
 
   const fetchProjects = async () => {
     try {
@@ -87,8 +89,14 @@ const Dashboard = () => {
 
   const handleCreateProject = async (e) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    setError("");
+    if (!title.trim()) {
+      setError("Project title is required");
+      setTitleTouched(true);
+      return;
+    }
 
+    setIsSubmitting(true);
     try {
       await api.post("/projects", {
         title,
@@ -102,10 +110,13 @@ const Dashboard = () => {
       setPriority("Medium");
       setStartDate("");
       setDueDate("");
+      setTitleTouched(false);
       fetchProjects(); // refresh the list so the new project shows immediately
       setActiveTab("Projects"); // jump over to see it in the list right away
     } catch (err) {
       setError(err.response?.data?.message || "Failed to create project");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -242,8 +253,19 @@ const Dashboard = () => {
               type="text"
               placeholder="Project title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="mb-2.5 block w-full rounded-md border border-border dark:border-slate-700 px-3 py-2.5 font-body text-sm"
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (e.target.value.trim()) {
+                  setError("");
+                }
+              }}
+              onBlur={() => setTitleTouched(true)}
+              required
+              className={`mb-2.5 block w-full rounded-md border px-3 py-2.5 font-body text-sm transition-all duration-200 focus:outline-none focus:ring-1 ${
+                titleTouched && !title.trim()
+                  ? "border-danger focus:border-danger focus:ring-danger focus-visible:outline-danger"
+                  : "border-border dark:border-slate-700 focus:border-teal focus:ring-teal"
+              }`}
             />
             <input
               type="text"
@@ -291,9 +313,10 @@ const Dashboard = () => {
 
             <button
               type="submit"
-              className="rounded-md bg-teal px-4 py-2.5 font-body text-sm font-semibold text-white hover:bg-teal-dark"
+              disabled={isSubmitting || !title.trim()}
+              className="rounded-md bg-teal px-4 py-2.5 font-body text-sm font-semibold text-white hover:bg-teal-dark transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              + Create Project
+              {isSubmitting ? "Creating..." : "+ Create Project"}
             </button>
           </form>
         )}
