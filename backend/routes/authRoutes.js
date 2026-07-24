@@ -6,15 +6,12 @@ const {
   getProfile,
   logoutUser,
 } = require("../controllers/authController");
-
-
-
-
 const { protect } = require("../middleware/auth");
-console.log("logoutUser:", logoutUser);
-console.log("protect:", protect);
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+const validate = require("../middleware/validate");
+const { registerValidation, loginValidation } = require("../validators/authValidators");
+
+router.post("/register", registerValidation, validate, registerUser);
+router.post("/login", loginValidation, validate, loginUser);
 router.post("/logout", protect, logoutUser);
 router.get("/profile", protect, getProfile); // protect runs first, THEN getProfile
 

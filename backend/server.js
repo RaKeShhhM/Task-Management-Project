@@ -50,6 +50,14 @@ app.get("/", (req, res) => {
   res.send("Task Manager API is running...");
 });
 
+// These two MUST be registered last — after every real route above.
+// notFound catches any URL that didn't match a route; errorHandler is the
+// single place that formats every error response (including ones thrown
+// inside asyncHandler-wrapped controllers) into a consistent JSON shape.
+const { notFound, errorHandler } = require("./middleware/errorHandler");
+app.use(notFound);
+app.use(errorHandler);
+
 const PORT = process.env.PORT || 5001;
 
 // IMPORTANT: listen on `server`, not `app`, so Socket.io and Express share the same port

@@ -1,6 +1,8 @@
 const Project = require("../models/Project");
 const Task = require("../models/Task");
 const User = require("../models/User");
+const asyncHandler = require("../utils/asyncHandler");
+const ApiError = require("../utils/ApiError");
 
 // Computes a project's real-world status AND completion percentage FROM its
 // tasks, rather than trusting a manually-set label that could go stale.
@@ -25,146 +27,6 @@ const computeProjectStats = async (projectId) => {
   return { status: "InProgress", percentComplete };
 };
 
-// @route   GET /api/projects
-// @access  Private — returns projects where user is owner OR a member
-const getProjects = async (req, res) => {
-  try {
-    const projects = await Project.find({
-      $or: [{ owner: req.user._id }, { "members.user": req.user._id }],
-    })
-      .populate("owner", "name email")
-      .populate("members.user", "name email");
-
-    // Attach computed `status` + `percentComplete` to each project based on its tasks.
-    // .toObject() so we can add plain fields onto what Mongoose returns.
-    const withStatus = await Promise.all(
-      projects.map(async (project) => {
-        const stats = await computeProjectStats(project._id);
-        return { ...project.toObject(), ...stats };
-      })
-    );
-
-    res.status(200).json(withStatus);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// @route   POST /api/projects
-// @access  Private
-const createProject = async (req, res) => {
-  try {
-    const { title, description, priority, startDate, dueDate } = req.body;
-
-    if (!title) {
-      return res.status(400).json({ message: "Title is required" });
-    }
-
-    const project = await Project.create({
-      title,
-      description,
-      priority: priority || "Medium",
-      startDate: startDate || Date.now(),
-      dueDate: dueDate || null,
-      owner: req.user._id, // logged-in user becomes the owner
-    });
-
-    res.status(201).json(project);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// @route   PUT /api/projects/:id
-// @access  Private — owner only
-const updateProject = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    // Ownership check — this is the resource-level RBAC from the README
-    if (project.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized — owner only" });
-    }
-
-    project.title = req.body.title || project.title;
-    project.description = req.body.description ?? project.description;
-    project.priority = req.body.priority ?? project.priority;
-    project.startDate = req.body.startDate ?? project.startDate;
-    project.dueDate = req.body.dueDate ?? project.dueDate;
-
-    const updated = await project.save();
-    res.status(200).json(updated);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// @route   DELETE /api/projects/:id
-// @access  Private — owner only
-const deleteProject = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    if (project.owner.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: "Not authorized — owner only" });
-    }
-
-    // Cascade delete: remove every task that belongs to this project too,
-    // otherwise they'd become orphaned rows nobody can ever see or clean up
-    await Task.deleteMany({ project: project._id });
-
-    await project.deleteOne();
-
-    // Let anyone currently viewing this board know it's gone (they'll get bounced
-    // to the dashboard on the frontend)
-    const io = req.app.get("io");
-    io.to(project._id.toString()).emit("projectDeleted", {
-      projectId: project._id.toString(),
-    });
-
-    res.status(200).json({ message: "Project deleted" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-// @route   GET /api/projects/:id
-// @access  Private — owner or member only
-const getProjectById = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id)
-      .populate("owner", "name email")
-      .populate("members.user", "name email");
-
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    const userId = req.user._id.toString();
-    const isOwner = project.owner._id.toString() === userId;
-    const isMember = project.members.some(
-      (m) => m.user._id.toString() === userId
-    );
-
-    if (!isOwner && !isMember) {
-      return res.status(403).json({ message: "Not authorized" });
-    }
-
-    const stats = await computeProjectStats(project._id);
-    res.status(200).json({ ...project.toObject(), ...stats });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
 // Helper: only the owner or an existing admin member can manage the team
 const canManageMembers = (project, userId) => {
   const idStr = userId.toString();
@@ -173,126 +35,212 @@ const canManageMembers = (project, userId) => {
   return member?.role === "admin";
 };
 
+// @route   GET /api/projects
+// @access  Private — returns projects where user is owner OR a member
+const getProjects = asyncHandler(async (req, res) => {
+  const projects = await Project.find({
+    $or: [{ owner: req.user._id }, { "members.user": req.user._id }],
+  })
+    .populate("owner", "name email")
+    .populate("members.user", "name email");
+
+  const withStatus = await Promise.all(
+    projects.map(async (project) => {
+      const stats = await computeProjectStats(project._id);
+      return { ...project.toObject(), ...stats };
+    })
+  );
+
+  res.status(200).json(withStatus);
+});
+
+// @route   POST /api/projects
+// @access  Private
+const createProject = asyncHandler(async (req, res) => {
+  const { title, description, priority, startDate, dueDate } = req.body;
+
+  const project = await Project.create({
+    title,
+    description,
+    priority: priority || "Medium",
+    startDate: startDate || Date.now(),
+    dueDate: dueDate || null,
+    owner: req.user._id,
+  });
+
+  res.status(201).json(project);
+});
+
+// @route   PUT /api/projects/:id
+// @access  Private — owner only
+const updateProject = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
+  if (project.owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized — owner only");
+  }
+
+  project.title = req.body.title || project.title;
+  project.description = req.body.description ?? project.description;
+  project.priority = req.body.priority ?? project.priority;
+  project.startDate = req.body.startDate ?? project.startDate;
+  project.dueDate = req.body.dueDate ?? project.dueDate;
+
+  const updated = await project.save();
+  res.status(200).json(updated);
+});
+
+// @route   DELETE /api/projects/:id
+// @access  Private — owner only
+const deleteProject = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id);
+
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
+  if (project.owner.toString() !== req.user._id.toString()) {
+    throw new ApiError(403, "Not authorized — owner only");
+  }
+
+  await Task.deleteMany({ project: project._id });
+  await project.deleteOne();
+
+  const io = req.app.get("io");
+  io.to(project._id.toString()).emit("projectDeleted", {
+    projectId: project._id.toString(),
+  });
+
+  res.status(200).json({ message: "Project deleted" });
+});
+
+// @route   GET /api/projects/:id
+// @access  Private — owner or member only
+const getProjectById = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id)
+    .populate("owner", "name email")
+    .populate("members.user", "name email");
+
+  if (!project) {
+    throw new ApiError(404, "Project not found");
+  }
+
+  const userId = req.user._id.toString();
+  const isOwner = project.owner._id.toString() === userId;
+  const isMember = project.members.some((m) => m.user._id.toString() === userId);
+
+  if (!isOwner && !isMember) {
+    throw new ApiError(403, "Not authorized");
+  }
+
+  const stats = await computeProjectStats(project._id);
+  res.status(200).json({ ...project.toObject(), ...stats });
+});
+
 // @route   POST /api/projects/:id/members
 // @access  Private — owner or admin only. Body: { email, role? }
-const addMember = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    if (!canManageMembers(project, req.user._id)) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized — owner/admin only" });
-    }
-
-    const { email, role } = req.body;
-    const userToAdd = await User.findOne({ email });
-
-    if (!userToAdd) {
-      return res.status(404).json({ message: "No user found with that email" });
-    }
-
-    if (project.owner.toString() === userToAdd._id.toString()) {
-      return res.status(400).json({ message: "User is already the owner" });
-    }
-
-    const alreadyMember = project.members.some(
-      (m) => m.user.toString() === userToAdd._id.toString()
-    );
-    if (alreadyMember) {
-      return res.status(400).json({ message: "User is already a member" });
-    }
-
-    project.members.push({
-      user: userToAdd._id,
-      role: role === "admin" ? "admin" : "member",
-    });
-
-    await project.save();
-
-    const updated = await Project.findById(project._id)
-      .populate("owner", "name email")
-      .populate("members.user", "name email");
-
-    res.status(201).json(updated);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+const addMember = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  if (!project) {
+    throw new ApiError(404, "Project not found");
   }
-};
+
+  if (!canManageMembers(project, req.user._id)) {
+    throw new ApiError(403, "Not authorized — owner/admin only");
+  }
+
+  const { email, role } = req.body;
+  const userToAdd = await User.findOne({ email });
+
+  if (!userToAdd) {
+    throw new ApiError(404, "No user found with that email");
+  }
+
+  if (project.owner.toString() === userToAdd._id.toString()) {
+    throw new ApiError(400, "User is already the owner");
+  }
+
+  const alreadyMember = project.members.some(
+    (m) => m.user.toString() === userToAdd._id.toString()
+  );
+  if (alreadyMember) {
+    throw new ApiError(400, "User is already a member");
+  }
+
+  project.members.push({
+    user: userToAdd._id,
+    role: role === "admin" ? "admin" : "member",
+  });
+
+  await project.save();
+
+  const updated = await Project.findById(project._id)
+    .populate("owner", "name email")
+    .populate("members.user", "name email");
+
+  res.status(201).json(updated);
+});
 
 // @route   PUT /api/projects/:id/members/:userId
 // @access  Private — owner or admin only. Body: { role }
-const updateMemberRole = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    if (!canManageMembers(project, req.user._id)) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized — owner/admin only" });
-    }
-
-    const member = project.members.find(
-      (m) => m.user.toString() === req.params.userId
-    );
-
-    if (!member) {
-      return res.status(404).json({ message: "Member not found" });
-    }
-
-    if (!["admin", "member"].includes(req.body.role)) {
-      return res.status(400).json({ message: "Role must be admin or member" });
-    }
-
-    member.role = req.body.role;
-    await project.save();
-
-    const updated = await Project.findById(project._id)
-      .populate("owner", "name email")
-      .populate("members.user", "name email");
-
-    res.status(200).json(updated);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+const updateMemberRole = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  if (!project) {
+    throw new ApiError(404, "Project not found");
   }
-};
+
+  if (!canManageMembers(project, req.user._id)) {
+    throw new ApiError(403, "Not authorized — owner/admin only");
+  }
+
+  const member = project.members.find((m) => m.user.toString() === req.params.userId);
+
+  if (!member) {
+    throw new ApiError(404, "Member not found");
+  }
+
+  if (!["admin", "member"].includes(req.body.role)) {
+    throw new ApiError(400, "Role must be admin or member");
+  }
+
+  member.role = req.body.role;
+  await project.save();
+
+  const updated = await Project.findById(project._id)
+    .populate("owner", "name email")
+    .populate("members.user", "name email");
+
+  res.status(200).json(updated);
+});
 
 // @route   DELETE /api/projects/:id/members/:userId
 // @access  Private — owner or admin only
-const removeMember = async (req, res) => {
-  try {
-    const project = await Project.findById(req.params.id);
-    if (!project) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
-    if (!canManageMembers(project, req.user._id)) {
-      return res
-        .status(403)
-        .json({ message: "Not authorized — owner/admin only" });
-    }
-
-    project.members = project.members.filter(
-      (m) => m.user.toString() !== req.params.userId
-    );
-
-    await project.save();
-
-    const updated = await Project.findById(project._id)
-      .populate("owner", "name email")
-      .populate("members.user", "name email");
-
-    res.status(200).json(updated);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+const removeMember = asyncHandler(async (req, res) => {
+  const project = await Project.findById(req.params.id);
+  if (!project) {
+    throw new ApiError(404, "Project not found");
   }
-};
+
+  if (!canManageMembers(project, req.user._id)) {
+    throw new ApiError(403, "Not authorized — owner/admin only");
+  }
+
+  project.members = project.members.filter(
+    (m) => m.user.toString() !== req.params.userId
+  );
+
+  await project.save();
+
+  const updated = await Project.findById(project._id)
+    .populate("owner", "name email")
+    .populate("members.user", "name email");
+
+  res.status(200).json(updated);
+});
 
 module.exports = {
   getProjects,
