@@ -11,6 +11,7 @@ const {
   removeMember,
 } = require("../controllers/projectController");
 const { protect } = require("../middleware/auth");
+const { requireProjectAccess } = require("../middleware/projectAccess");
 const validate = require("../middleware/validate");
 const {
   createProjectValidation,
@@ -25,12 +26,12 @@ router.route("/").get(getProjects).post(createProjectValidation, validate, creat
 
 router
   .route("/:id")
-  .get(getProjectById)
-  .put(updateProjectValidation, validate, updateProject)
-  .delete(deleteProject);
+  .get(requireProjectAccess((req) => req.params.id), getProjectById)
+  .put(requireProjectAccess((req) => req.params.id), updateProjectValidation, validate, updateProject)
+  .delete(requireProjectAccess((req) => req.params.id), deleteProject);
 
-router.post("/:id/members", addMemberValidation, validate, addMember);
-router.put("/:id/members/:userId", updateMemberRole);
-router.delete("/:id/members/:userId", removeMember);
+router.post("/:id/members", requireProjectAccess((req) => req.params.id), addMemberValidation, validate, addMember);
+router.put("/:id/members/:userId", requireProjectAccess((req) => req.params.id), updateMemberRole);
+router.delete("/:id/members/:userId", requireProjectAccess((req) => req.params.id), removeMember);
 
 module.exports = router;

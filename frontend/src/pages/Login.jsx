@@ -149,6 +149,11 @@ const Login = () => {
               </p>
             )}
           </div>
+          <div className="-mt-2 mb-4 text-right">
+            <Link to="/forgot-password" className="text-sm font-medium text-teal">
+              Forgot password?
+            </Link>
+          </div>
           <button
             type="submit"
             disabled={isSubmitting || hasErrors}

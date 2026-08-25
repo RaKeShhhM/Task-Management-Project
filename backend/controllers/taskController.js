@@ -1,9 +1,13 @@
 const Task = require("../models/Task");
 const Project = require("../models/Project");
+const Comment = require("../models/Comment");
+const ActivityLog = require("../models/ActivityLog");
 const logActivity = require("../utils/logActivity");
 const sendEmail = require("../utils/sendEmail");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
+// top of file, alongside the other requires
+const sendDueDateReminders = require("../utils/sendDueDateReminders");
 
 // @route   POST /api/tasks
 // @access  Private
@@ -158,6 +162,9 @@ const deleteTask = asyncHandler(async (req, res) => {
   const taskId = task._id.toString();
   const taskTitle = task.title;
 
+  // Cascade: remove all comments and activity logs that belong to this task
+  await Comment.deleteMany({ task: task._id });
+  await ActivityLog.deleteMany({ project: task.project, message: { $regex: taskTitle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") } });
   await task.deleteOne();
 
   const io = req.app.get("io");
@@ -168,4 +175,14 @@ const deleteTask = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Task deleted" });
 });
 
-module.exports = { createTask, getTasksByProject, updateTask, deleteTask };
+
+// @route   POST /api/tasks/reminders/run
+// @access  Private — any logged-in user can trigger it; it's a global utility
+// action, not scoped to data they own. Fine for a project this size, but
+// worth restricting to an admin role if this app ever has real multi-tenant users.
+const runDueDateReminders = asyncHandler(async (req, res) => {
+  const result = await sendDueDateReminders();
+  res.status(200).json(result);
+});
+
+module.exports = { createTask, getTasksByProject, updateTask, deleteTask, runDueDateReminders };

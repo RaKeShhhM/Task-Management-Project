@@ -10,7 +10,7 @@ A full-stack, real-time collaborative task management application built with the
 
 ## ✨ Features
 
-- **Authentication & Authorization** — JWT-based auth with httpOnly cookies, bcrypt password hashing
+- **Authentication & Authorization** — JWT-based auth with httpOnly cookies, bcrypt password hashing, and secure email password reset links
 - **Role-based Access Control** — project Owner / Admin / Member roles with distinct permissions
 - **Real-Time Kanban Board** — drag tasks through ToDo → In Progress → Done, synced live via Socket.io
 - **Task Management** — priority levels, due dates, assignees, overdue detection
@@ -190,6 +190,8 @@ Visit **http://localhost:5173**.
 | POST | `/api/users/login` | Log in |
 | POST | `/api/users/logout` | Log out |
 | GET | `/api/users/profile` | Get current user |
+| POST | `/api/users/forgot-password` | Email a one-hour password reset link if the account exists |
+| PUT | `/api/users/reset-password/:token` | Set a new password with a valid one-time reset token |
 
 ### Projects
 | Method | Endpoint | Description |

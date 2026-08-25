@@ -26,6 +26,13 @@ const taskSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // Set to a copy of `dueDate` after a reminder email is sent for it.
+    // If the task is rescheduled, this stops matching the new dueDate,
+    // so it naturally becomes eligible for a fresh reminder.
+    remindedForDueDate: {
+      type: Date,
+      default: null,
+    },
     project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
@@ -46,5 +53,14 @@ const taskSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Indexes — speed up the most common query patterns:
+// project+status covers Kanban board loads and column filtering
+taskSchema.index({ project: 1, status: 1 });
+// priority and dueDate support filtering and overdue detection
+taskSchema.index({ project: 1, priority: 1 });
+taskSchema.index({ project: 1, dueDate: 1 });
+// assignee index covers "my tasks" views
+taskSchema.index({ assignee: 1 });
 
 module.exports = mongoose.model("Task", taskSchema);

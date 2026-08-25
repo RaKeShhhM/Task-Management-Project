@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const User = require("../models/User");
+const sendEmail = require("../utils/sendEmail");
 const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 
@@ -86,4 +88,76 @@ const logoutUser = (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 };
 
-module.exports = { registerUser, loginUser, getProfile, logoutUser };
+// @route   POST /api/users/forgot-password
+// @access  Public
+// Always returns the same message so attackers cannot discover which emails
+// belong to registered accounts.
+const forgotPassword = asyncHandler(async (req, res) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (user) {
+    const resetToken = user.createPasswordResetToken();
+    await user.save({ validateBeforeSave: false });
+
+    const clientUrl = (process.env.CLIENT_URL || "http://localhost:5173").replace(/\/$/, "");
+    const resetUrl = `${clientUrl}/reset-password/${resetToken}`;
+
+    try {
+      await sendEmail(
+        user.email,
+        "Reset your TeamBoard password",
+        `Hi ${user.name},\n\nYou requested a password reset for your TeamBoard account. Use the link below to choose a new password:\n\n${resetUrl}\n\nThis link expires in one hour and can only be used once. If you did not request this, you can safely ignore this email.`
+      );
+    } catch (error) {
+      // Do not leave an unusable token in the database if sending failed.
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      await user.save({ validateBeforeSave: false });
+      console.error("Failed to send password reset email:", error.message);
+    }
+  }
+
+  res.status(200).json({
+    message: "If an account exists for that email, a password reset link has been sent.",
+  });
+});
+
+// @route   PUT /api/users/reset-password/:token
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+  const resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(req.params.token)
+    .digest("hex");
+
+  const user = await User.findOne({
+    resetPasswordToken,
+    resetPasswordExpires: { $gt: Date.now() },
+  }).select("+password +resetPasswordToken +resetPasswordExpires");
+
+  if (!user) {
+    throw new ApiError(400, "This password reset link is invalid or has expired");
+  }
+
+  user.password = req.body.password;
+  user.resetPasswordToken = undefined;
+  user.resetPasswordExpires = undefined;
+  await user.save(); // User pre-save hook hashes the new password
+
+  generateTokenAndSetCookie(res, user._id);
+  res.status(200).json({
+    _id: user._id,
+    name: user.name,
+    email: user.email,
+    message: "Password reset successfully",
+  });
+});
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getProfile,
+  logoutUser,
+  forgotPassword,
+  resetPassword,
+};

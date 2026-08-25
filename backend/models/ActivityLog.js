@@ -22,4 +22,7 @@ const activityLogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+// Index: activity is always fetched per-project, sorted newest-first
+activityLogSchema.index({ project: 1, createdAt: -1 });
+
 module.exports = mongoose.model("ActivityLog", activityLogSchema);
