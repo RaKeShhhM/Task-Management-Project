@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 
 const userSchema = new mongoose.Schema(
   {
@@ -21,6 +22,16 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
       select: false, // never return password by default in queries
     },
+    // Only a SHA-256 hash of the reset token is stored. If the database is
+    // exposed, a stored value cannot itself be used as a reset link.
+    resetPasswordToken: {
+      type: String,
+      select: false,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      select: false,
+    },
   },
   { timestamps: true }
 );
@@ -37,6 +48,20 @@ userSchema.pre("save", async function (next) {
 //  Instance method to compare entered password with hashed one in DB
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
+};
+
+// Return the raw token once so it can be emailed, while saving only its hash.
+// A reset link expires in one hour and is invalidated after successful use.
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+
+  this.resetPasswordToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  this.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000);
+
+  return resetToken;
 };
 
 module.exports = mongoose.model("User", userSchema);

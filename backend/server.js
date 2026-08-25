@@ -6,6 +6,7 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const connectDB = require("./config/db");
 const initSocket = require("./socket/socketHandler");
+const startDueDateReminderJob = require("./jobs/dueDateReminderJob");
 
 dotenv.config();
 connectDB();
@@ -45,6 +46,7 @@ app.use("/api/projects", require("./routes/projectRoutes"));
 app.use("/api/tasks", require("./routes/taskRoutes"));
 app.use("/api/comments", require("./routes/commentRoutes"));
 app.use("/api/activity", require("./routes/activityRoutes"));
+app.use("/api/ai", require("./routes/aiRoutes"));
 
 app.get("/", (req, res) => {
   res.send("Task Manager API is running...");
@@ -63,4 +65,5 @@ const PORT = process.env.PORT || 5001;
 // IMPORTANT: listen on `server`, not `app`, so Socket.io and Express share the same port
 server.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  startDueDateReminderJob();
 });

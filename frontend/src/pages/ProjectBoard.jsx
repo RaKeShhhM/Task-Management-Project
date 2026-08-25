@@ -8,6 +8,7 @@ import TeamPanel from "../components/TeamPanel";
 import TaskAnalytics from "../components/TaskAnalytics";
 import MembersOverview from "../components/MembersOverview";
 import ActivityFeed from "../components/ActivityFeed";
+import AISummaryPanel from "../components/AISummaryPanel";
 
 const COLUMNS = ["ToDo", "InProgress", "Done"];
 const TABS = ["Add Task", "Add Members", "Members", "Activity"];
@@ -361,7 +362,12 @@ const ProjectBoard = () => {
           <MembersOverview project={project} tasks={tasks} />
         )}
 
-        {activeTab === "Activity" && <ActivityFeed projectId={projectId} />}
+        {activeTab === "Activity" && (
+          <>
+            <AISummaryPanel projectId={projectId} />
+            <ActivityFeed projectId={projectId} />
+          </>
+        )}
       </div>
 
       {error && <p className="text-sm text-danger">{error}</p>}
